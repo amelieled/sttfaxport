@@ -1,2 +1,4 @@
 (test
- (name sttfa))
+ (name sttfaxport)
+ (libraries sttfaxport)
+ (deps sttfa.dk sttfa.dko connectives.dk))

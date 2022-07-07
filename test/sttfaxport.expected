@@ -1,0 +1,20 @@
+Parameter True : Prop
+Parameter False : Prop
+Parameter Not : Prop -> Prop
+Parameter And : Prop -> Prop -> Prop
+Parameter Or : Prop -> Prop -> Prop
+Parameter ex : forall (A:Type), (A -> Prop) -> Prop
+Parameter equal : forall (A:Type), A -> A -> Prop
+Axiom I : connectives.True
+Axiom falsity : forall (t:Prop), connectives.False -> t
+Axiom nmk : forall (A:Prop), (A -> connectives.False) -> connectives.Not A
+Axiom Not_ind : forall (A:Prop), forall (Q:Prop), ((A -> connectives.False) -> Q) -> (connectives.Not A) -> Q
+Axiom conj : forall (A:Prop), forall (B:Prop), A -> B -> connectives.And A B
+Axiom match_And_prop : forall (A:Prop), forall (B:Prop), forall (return_:Prop), (A -> B -> return_) -> (connectives.And A B) -> return_
+Axiom or_introl : forall (A:Prop), forall (B:Prop), A -> connectives.Or A B
+Axiom or_intror : forall (A:Prop), forall (B:Prop), B -> connectives.Or A B
+Axiom match_Or_prop : forall (A:Prop), forall (B:Prop), forall (return_:Prop), (A -> return_) -> (B -> return_) -> (connectives.Or A B) -> return_
+Axiom ex_intro : forall A, forall (P:(A -> Prop)), forall (x:A), (P x) -> connectives.ex (A) P
+Axiom match_ex_prop : forall A, forall (P:(A -> Prop)), forall (return_:Prop), (forall (x:A), (P x) -> return_) -> (connectives.ex (A) P) -> return_
+Axiom refl_equal : forall A, forall (x:A), connectives.equal (A) x x
+Axiom equal_leibniz : forall A, forall (x:A), forall (y:A), (connectives.equal (A) x y) -> forall (P:(A -> Prop)), (P x) -> P y
