@@ -1,24 +1,3 @@
-module SttfaCompiler : Api.Processor.S with type t = Ast.item list = struct
-  type t = Ast.item list
-
-  let acc = ref []
-  let handle_entry env entry = acc := Compile.compile_entry env entry :: !acc
-  let get_data _ = !acc
-end
-
-type _ Api.Processor.t += SttfaAst : Ast.item list Api.Processor.t
-
-let equal_ast (type a b) :
-    a Api.Processor.t * b Api.Processor.t ->
-    (a Api.Processor.t, b Api.Processor.t) Api.Processor.Registration.equal
-    option = function
-  | SttfaAst, SttfaAst -> Some (Api.Processor.Registration.Refl SttfaAst)
-  | _ -> None
-
-let () =
-  Api.Processor.Registration.register_processor SttfaAst { equal = equal_ast }
-    (module SttfaCompiler)
-
 type printer = out_channel -> unit
 
 module CoqExport : Api.Processor.S with type t = printer list = struct
