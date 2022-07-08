@@ -1,4 +1,4 @@
-(test
- (name sttfaxport)
+(tests
+ (names coq matita pvs)
  (libraries sttfaxport)
  (deps sttfa.dk sttfa.dko connectives.dk))

@@ -52,4 +52,7 @@ let export ?(path = []) ?(oc = stdout) sys file =
   | Systems.Pvs ->
       Pvs.print_ast oc ast;
       Ok ()
+  | Systems.Matita ->
+      Matita.print_ast oc ast;
+      Ok ()
   | _ -> Error ()

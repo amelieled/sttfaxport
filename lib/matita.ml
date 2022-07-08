@@ -118,8 +118,8 @@ let print_item oc = function
       Format.fprintf oc "axiom %a : %a.@." print_name tyop print_arity arity
   | TypeDef _ -> failwith "[Matita] Type definitions not handled right now"
 
-let print_ast : Format.formatter -> ?mdeps:Ast.mdeps -> Ast.ast -> unit =
- fun fmt ?mdeps:_ ast ->
+let print_ast oc ast : unit =
+  let fmt = Format.formatter_of_out_channel oc in
   print_dep fmt "basics/pts";
   StrSet.iter (print_dep fmt) ast.dep;
   List.iter (print_item fmt) ast.items
