@@ -4,6 +4,7 @@ synopsis: "An exporter for files written in the STTfa logic."
 depends: [
   "ocaml"
   "dune" {>= "3.3"}
+  "logs"
   "dedukti" {>= "2.7"}
   "odoc" {with-doc}
 ]

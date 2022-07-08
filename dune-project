@@ -9,4 +9,5 @@
  (synopsis "An exporter for files written in the STTfa logic.")
  (depends ocaml
           dune
+          logs
           (dedukti (>= 2.7))))
