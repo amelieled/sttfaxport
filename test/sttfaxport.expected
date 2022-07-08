@@ -1,20 +1,115 @@
-Parameter True : Prop
-Parameter False : Prop
-Parameter Not : Prop -> Prop
-Parameter And : Prop -> Prop -> Prop
-Parameter Or : Prop -> Prop -> Prop
-Parameter ex : forall (A:Type), (A -> Prop) -> Prop
-Parameter equal : forall (A:Type), A -> A -> Prop
-Axiom I : connectives.True
-Axiom falsity : forall (t:Prop), connectives.False -> t
-Axiom nmk : forall (A:Prop), (A -> connectives.False) -> connectives.Not A
-Axiom Not_ind : forall (A:Prop), forall (Q:Prop), ((A -> connectives.False) -> Q) -> (connectives.Not A) -> Q
-Axiom conj : forall (A:Prop), forall (B:Prop), A -> B -> connectives.And A B
-Axiom match_And_prop : forall (A:Prop), forall (B:Prop), forall (return_:Prop), (A -> B -> return_) -> (connectives.And A B) -> return_
-Axiom or_introl : forall (A:Prop), forall (B:Prop), A -> connectives.Or A B
-Axiom or_intror : forall (A:Prop), forall (B:Prop), B -> connectives.Or A B
-Axiom match_Or_prop : forall (A:Prop), forall (B:Prop), forall (return_:Prop), (A -> return_) -> (B -> return_) -> (connectives.Or A B) -> return_
-Axiom ex_intro : forall A, forall (P:(A -> Prop)), forall (x:A), (P x) -> connectives.ex (A) P
-Axiom match_ex_prop : forall A, forall (P:(A -> Prop)), forall (return_:Prop), (forall (x:A), (P x) -> return_) -> (connectives.ex (A) P) -> return_
-Axiom refl_equal : forall A, forall (x:A), connectives.equal (A) x x
-Axiom equal_leibniz : forall A, forall (x:A), forall (y:A), (connectives.equal (A) x y) -> forall (P:(A -> Prop)), (P x) -> P y
+Parameter True : Prop.
+Parameter False : Prop.
+Parameter Not : Prop -> Prop.
+Parameter And : Prop -> Prop -> Prop.
+Parameter Or : Prop -> Prop -> Prop.
+Parameter ex : forall (A:Type), (A -> Prop) -> Prop.
+Parameter equal : forall (A:Type), A -> A -> Prop.
+Axiom I : True.
+Axiom falsity : forall (t:Prop), False -> t.
+Axiom nmk : forall (A:Prop), (A -> False) -> Not A.
+Axiom Not_ind : forall (A:Prop), forall (Q:Prop), ((A -> False) -> Q) -> (Not A) -> Q.
+Axiom conj : forall (A:Prop), forall (B:Prop), A -> B -> And A B.
+Axiom match_And_prop : forall (A:Prop), forall (B:Prop), forall (return_:Prop), (A -> B -> return_) -> (And A B) -> return_.
+Axiom or_introl : forall (A:Prop), forall (B:Prop), A -> Or A B.
+Axiom or_intror : forall (A:Prop), forall (B:Prop), B -> Or A B.
+Axiom match_Or_prop : forall (A:Prop), forall (B:Prop), forall (return_:Prop), (A -> return_) -> (B -> return_) -> (Or A B) -> return_.
+Axiom ex_intro : forall A, forall (P:(A -> Prop)), forall (x:A), (P x) -> ex (A) P.
+Axiom match_ex_prop : forall A, forall (P:(A -> Prop)), forall (return_:Prop), (forall (x:A), (P x) -> return_) -> (ex (A) P) -> return_.
+Axiom refl_equal : forall A, forall (x:A), equal (A) x x.
+Axiom equal_leibniz : forall A, forall (x:A), forall (y:A), (equal (A) x y) -> forall (P:(A -> Prop)), (P x) -> P y.
+connectives_sttfa : THEORY
+BEGIN
+
+sttfa_True : bool
+
+sttfa_False : bool
+
+sttfa_Not : [bool -> bool]
+
+sttfa_And : [bool -> [bool -> bool]]
+
+sttfa_Or : [bool -> [bool -> bool]]
+
+sttfa_ex [A:TYPE+]: [[A -> bool] -> bool]
+
+equal [A:TYPE+]: [A -> [A -> bool]]
+
+I  : AXIOM connectives_sttfa.sttfa_True
+
+falsity  : AXIOM (FORALL(t:bool):(connectives_sttfa.sttfa_False => t))
+
+nmk  : AXIOM (FORALL(A:bool):((A => connectives_sttfa.sttfa_False) => connectives_sttfa.sttfa_Not(A)))
+
+Not_ind  : AXIOM (FORALL(A:bool):(FORALL(Q:bool):(((A => connectives_sttfa.sttfa_False) => Q) => (connectives_sttfa.sttfa_Not(A) => Q))))
+
+conj  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(A => (B => connectives_sttfa.sttfa_And(A)(B)))))
+
+match_And_prop  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(FORALL(return:bool):((A => (B => return)) => (connectives_sttfa.sttfa_And(A)(B) => return)))))
+
+or_introl  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(A => connectives_sttfa.sttfa_Or(A)(B))))
+
+or_intror  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(B => connectives_sttfa.sttfa_Or(A)(B))))
+
+match_Or_prop  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(FORALL(return:bool):((A => return) => ((B => return) => (connectives_sttfa.sttfa_Or(A)(B) => return))))))
+
+ex_intro [A:TYPE+] : AXIOM (FORALL(P:[A -> bool]):(FORALL(x:A):(P(x) => connectives_sttfa.sttfa_ex[A](P))))
+
+match_ex_prop [A:TYPE+] : AXIOM (FORALL(P:[A -> bool]):(FORALL(return:bool):((FORALL(x:A):(P(x) => return)) => (connectives_sttfa.sttfa_ex[A](P) => return))))
+
+refl_equal [A:TYPE+] : AXIOM (FORALL(x:A):connectives_sttfa.equal[A](x)(x))
+
+equal_leibniz [A:TYPE+] : AXIOM (FORALL(x:A):(FORALL(y:A):(connectives_sttfa.equal[A](x)(y) => (FORALL(P:[A -> bool]):(P(x) => P(y))))))
+
+sttfa_True : bool
+
+sttfa_False : bool
+
+sttfa_Not : [bool -> bool]
+
+sttfa_And : [bool -> [bool -> bool]]
+
+sttfa_Or : [bool -> [bool -> bool]]
+
+sttfa_ex [A:TYPE+]: [[A -> bool] -> bool]
+
+equal [A:TYPE+]: [A -> [A -> bool]]
+
+I  : AXIOM connectives_sttfa.sttfa_True
+
+falsity  : AXIOM (FORALL(t:bool):(connectives_sttfa.sttfa_False => t))
+
+nmk  : AXIOM (FORALL(A:bool):((A => connectives_sttfa.sttfa_False) => connectives_sttfa.sttfa_Not(A)))
+
+Not_ind  : AXIOM (FORALL(A:bool):(FORALL(Q:bool):(((A => connectives_sttfa.sttfa_False) => Q) => (connectives_sttfa.sttfa_Not(A) => Q))))
+
+conj  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(A => (B => connectives_sttfa.sttfa_And(A)(B)))))
+
+match_And_prop  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(FORALL(return:bool):((A => (B => return)) => (connectives_sttfa.sttfa_And(A)(B) => return)))))
+
+or_introl  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(A => connectives_sttfa.sttfa_Or(A)(B))))
+
+or_intror  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(B => connectives_sttfa.sttfa_Or(A)(B))))
+
+match_Or_prop  : AXIOM (FORALL(A:bool):(FORALL(B:bool):(FORALL(return:bool):((A => return) => ((B => return) => (connectives_sttfa.sttfa_Or(A)(B) => return))))))
+
+ex_intro [A:TYPE+] : AXIOM (FORALL(P:[A -> bool]):(FORALL(x:A):(P(x) => connectives_sttfa.sttfa_ex[A](P))))
+
+match_ex_prop [A:TYPE+] : AXIOM (FORALL(P:[A -> bool]):(FORALL(return:bool):((FORALL(x:A):(P(x) => return)) => (connectives_sttfa.sttfa_ex[A](P) => return))))
+
+refl_equal [A:TYPE+] : AXIOM (FORALL(x:A):connectives_sttfa.equal[A](x)(x))
+
+equal_leibniz [A:TYPE+] : AXIOM (FORALL(x:A):(FORALL(y:A):(connectives_sttfa.equal[A](x)(y) => (FORALL(P:[A -> bool]):(P(x) => P(y))))))
+
+END connectives_sttfa
+connectives_pvs : THEORY
+BEGIN
+IMPORTING connectives_sttfa
+%% sttfa_True := ...,%% sttfa_False := ...,%% sttfa_Not := ...,
+%% sttfa_And := ...,%% sttfa_Or := ...,%% sttfa_ex[A:TYPE+] := ...,
+%% equal[A:TYPE+] := ...,%% sttfa_True := ...,%% sttfa_False := ...,
+%% sttfa_Not := ...,%% sttfa_And := ...,%% sttfa_Or := ...,
+%% sttfa_ex[A:TYPE+] := ...,%% equal[A:TYPE+] := ...
+}}
+END connectives_pvs
+

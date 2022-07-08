@@ -312,23 +312,24 @@ let print_alignment : F.formatter -> string -> StrSet.t -> A.item list -> unit =
   out "%a" pp_its (List.filter uninterpreted items);
   out "@]@,}}@\n"
 
-(* let print_ast : F.formatter -> ?mdeps:A.mdeps -> A.ast -> unit = *)
-(*  fun oc ?mdeps ast -> *)
-(*   current_module := ast.md; *)
-(*   let deps = remove_transitive_deps mdeps ast.dep in *)
-(*   (1* Actual theory *1) *)
-(*   line oc "%s_sttfa : THEORY" ast.md; *)
-(*   line oc "BEGIN"; *)
-(*   StrSet.iter (print_dep oc) deps; *)
-(*   line oc ""; *)
-(*   List.iter (print_item oc ast.md) ast.items; *)
-(*   line oc "END %s_sttfa" ast.md; *)
-(*   (1* Concept alignment theory *1) *)
-(*   line oc "%s_pvs : THEORY" ast.md; *)
-(*   line oc "BEGIN"; *)
-(*   StrSet.iter (print_dep_al oc) deps; *)
-(*   print_alignment oc ast.md deps ast.items; *)
-(*   line oc "END %s_pvs@\n@." ast.md *)
+let print_ast (oc : out_channel) ast : unit =
+  let deps = ast.Ast.dep in
+  let oc = Format.formatter_of_out_channel oc in
+  current_module := ast.Ast.md;
+  (* REVIEW: transitive deps should be removed *)
+  (* Actual theory *)
+  line oc "%s_sttfa : THEORY" ast.md;
+  line oc "BEGIN";
+  StrSet.iter (print_dep oc) deps;
+  line oc "";
+  List.iter (print_item oc ast.md) ast.items;
+  line oc "END %s_sttfa" ast.md;
+  (* Concept alignment theory *)
+  line oc "%s_pvs : THEORY" ast.md;
+  line oc "BEGIN";
+  StrSet.iter (print_dep_al oc) deps;
+  print_alignment oc ast.md deps ast.items;
+  line oc "END %s_pvs@\n@." ast.md
 
 let to_string fmt = F.asprintf "%a" fmt
 

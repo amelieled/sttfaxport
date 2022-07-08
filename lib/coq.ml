@@ -121,19 +121,19 @@ let print_item oc = function
       Format.fprintf oc "Parameter %a : %a.@." print_name tyop print_arity arity
   | TypeDef _ -> ()
 
-let print_ast : Format.formatter -> ?mdeps:Ast.mdeps -> Ast.ast -> unit =
- fun fmt ?mdeps:_ ast ->
+let print_ast (oc : out_channel) ast : unit =
   cur_md := sanitize ast.md;
+  let fmt = Format.formatter_of_out_channel oc in
   StrSet.iter (print_dep fmt) ast.dep;
   List.iter (print_item fmt) ast.items
 
-let print_meta_ast fmt meta_ast =
-  let print_ast fmt ast =
-    Format.fprintf fmt "Module %s.\n" ast.md;
-    print_ast fmt ast;
-    Format.fprintf fmt "End %s.\n\n" ast.md
-  in
-  List.iter (print_ast fmt) meta_ast
+(* let print_meta_ast fmt meta_ast = *)
+(*   let print_ast fmt ast = *)
+(*     Format.fprintf fmt "Module %s.\n" ast.md; *)
+(*     print_ast fmt ast; *)
+(*     Format.fprintf fmt "End %s.\n\n" ast.md *)
+(*   in *)
+(*   List.iter (print_ast fmt) meta_ast *)
 
 let to_string fmt = Format.asprintf "%a" fmt
 

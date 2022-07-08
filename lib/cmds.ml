@@ -1,72 +1,55 @@
-type printer = out_channel -> unit
+open Extras
 
-module type EXP = sig
-  val string_of_item : Api.Env.t -> Ast.item -> string
+type ('a, 'b) register_eq =
+  'a Api.Processor.t * 'b Api.Processor.t ->
+  ('a Api.Processor.t, 'b Api.Processor.t) Api.Processor.Registration.equal
+  option
+
+module SttfaCompile = struct
+  (* NOTE the compiler works for one module only. *)
+  type t = Ast.ast
+
+  let items = ref []
+
+  let handle_entry env entry =
+    let modu = Api.Env.get_name env in
+    items :=
+      ( Compile.compile_entry env entry,
+        Deps.dep_of_entry [ Sttfadk.sttfa_module; modu ] entry )
+      :: !items
+
+  let get_data env =
+    let modu = Api.Env.get_name env in
+    let items = List.rev !items in
+    let dep = List.fold_left StrSet.union StrSet.empty (List.map snd items) in
+    Ast.
+      {
+        md = Kernel.Basic.string_of_mident modu;
+        dep;
+        items = List.map fst items;
+      }
 end
 
-let processor_of_exporter (module Exp : EXP) :
-    (module Api.Processor.S with type t = printer list) =
-  (module struct
-    let printers = ref []
+type _ Api.Processor.t += SttfaCompile : Ast.ast Api.Processor.t
 
-    type t = printer list
-
-    let handle_entry env entry =
-      let item = Compile.compile_entry env entry in
-      let stritem = Exp.string_of_item env item in
-      printers := (fun oc -> Printf.fprintf oc "%s" stritem) :: !printers
-
-    let get_data _ = List.rev !printers
-  end : Api.Processor.S
-    with type t = printer list)
-
-module CoqExport = (val processor_of_exporter (module Coq))
-
-type _ Api.Processor.t += CoqExport : printer list Api.Processor.t
-
-let equal_coqexport (type a b) :
-    a Api.Processor.t * b Api.Processor.t ->
-    (a Api.Processor.t, b Api.Processor.t) Api.Processor.Registration.equal
-    option = function
-  | CoqExport, CoqExport -> Some (Api.Processor.Registration.Refl CoqExport)
-  | _ -> None
-
-module PvsExport = (val processor_of_exporter (module Pvs))
-
-type _ Api.Processor.t += PvsExport : printer list Api.Processor.t
-
-let equal_pvsexport (type a b) :
-    a Api.Processor.t * b Api.Processor.t ->
-    (a Api.Processor.t, b Api.Processor.t) Api.Processor.Registration.equal
-    option = function
-  | PvsExport, PvsExport -> Some (Api.Processor.Registration.Refl PvsExport)
+let equal_sttfacompile (type a b) : (a, b) register_eq = function
+  | SttfaCompile, SttfaCompile ->
+      Some (Api.Processor.Registration.Refl SttfaCompile)
   | _ -> None
 
 let () =
-  Api.Processor.Registration.register_processor CoqExport
-    { equal = equal_coqexport }
-    (module CoqExport);
-  Api.Processor.Registration.register_processor PvsExport
-    { equal = equal_pvsexport }
-    (module PvsExport)
+  Api.Processor.Registration.register_processor SttfaCompile
+    { equal = equal_sttfacompile }
+    (module SttfaCompile)
 
-let export ?(path = []) ?(oc = stdout) sys files =
+let export ?(path = []) ?(oc = stdout) sys file =
   List.iter Api.Files.add_path path;
+  let ast = Api.Processor.handle_files [ file ] SttfaCompile in
   match sys with
   | Systems.Coq ->
-      let printers = Api.Processor.handle_files files CoqExport in
-      List.iter
-        (fun e ->
-          e oc;
-          Printf.fprintf oc "\n")
-        printers;
+      Coq.print_ast oc ast;
       Ok ()
   | Systems.Pvs ->
-      let printers = Api.Processor.handle_files files PvsExport in
-      List.iter
-        (fun e ->
-          e oc;
-          Printf.fprintf oc "\n")
-        printers;
+      Pvs.print_ast oc ast;
       Ok ()
-  | _ -> assert false
+  | _ -> Error ()
