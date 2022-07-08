@@ -45,14 +45,6 @@ let () =
 let export ?(path = []) ?(oc = stdout) sys file =
   List.iter Api.Files.add_path path;
   let ast = Api.Processor.handle_files [ file ] SttfaCompile in
-  match sys with
-  | Systems.Coq ->
-      Coq.print_ast oc ast;
-      Ok ()
-  | Systems.Pvs ->
-      Pvs.print_ast oc ast;
-      Ok ()
-  | Systems.Matita ->
-      Matita.print_ast oc ast;
-      Ok ()
-  | _ -> Error ()
+  let (module Exporter) = Systems.exporter sys in
+  Exporter.print_ast oc ast;
+  Ok ()

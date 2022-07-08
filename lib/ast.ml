@@ -19,11 +19,7 @@ type _ty =
   | TyOp of name * _ty list
   | Prop
 
-let dummy__ty = TyVar "dummy"
-
 type ty = ForallK of ty_var * ty | Ty of _ty
-
-let dummy_ty = Ty dummy__ty
 
 type _te =
   | TeVar of te_var
@@ -123,14 +119,6 @@ let kind_of = function
   | TypeDecl _ -> `TypeDecl
   | TypeDef _ -> `TypeDef
 
-let string_of_kind = function
-  | `Parameter -> "parameter"
-  | `Definition -> "definition"
-  | `Axiom -> "axiom"
-  | `Theorem -> "theorem"
-  | `TypeDecl -> "tyop"
-  | `TypeDef -> "type definition"
-
 let name_of = function
   | Parameter (name, _)
   | Definition (name, _, _)
@@ -150,5 +138,3 @@ let judgment_of = function
   | ForallI (j, _, _) -> j
   | ForallPE (j, _, _) -> j
   | ForallPI (j, _, _) -> j
-
-let string_of_name (md, id) = Format.sprintf "%s.%s" md id
