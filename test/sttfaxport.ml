@@ -1,4 +1,11 @@
+open Sttfaxport
+
+let ( let* ) = Result.bind
+
 let () =
-  match Sttfaxport.Cmds.export Sttfaxport.Systems.Coq ["connectives.dk"] with
-  | Ok _ -> ()
-  | Error _ -> exit 1
+  let res =
+    let* () = Cmds.export Systems.Coq [ "connectives.dk" ] in
+    let* () = Cmds.export Systems.Pvs [ "connectives.dk" ] in
+    Ok ()
+  in
+  match res with Ok () -> () | Error _ -> exit 1

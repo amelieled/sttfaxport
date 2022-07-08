@@ -1,3 +1,4 @@
+open Extras
 open Ast
 
 let sys = "matita"
@@ -120,13 +121,13 @@ let print_item oc = function
 let print_ast : Format.formatter -> ?mdeps:Ast.mdeps -> Ast.ast -> unit =
  fun fmt ?mdeps:_ ast ->
   print_dep fmt "basics/pts";
-  D.QSet.iter (print_dep fmt) ast.dep;
+  StrSet.iter (print_dep fmt) ast.dep;
   List.iter (print_item fmt) ast.items
 
 (* FIXME: Probably there is something to do in case of a conflict name *)
 let print_meta_ast fmt meta_ast =
   let print_ast fmt ast =
-    D.QSet.iter (print_dep fmt) ast.dep;
+    StrSet.iter (print_dep fmt) ast.dep;
     List.iter (print_item fmt) ast.items
   in
   print_dep fmt "basics/pts";

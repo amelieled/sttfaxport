@@ -6,56 +6,6 @@ type 'a pp = Format.formatter -> 'a -> unit
 
 module StrSet = Set.Make (String)
 
-module Option = struct
-  type 'a t = 'a option
-
-  let map : ('a -> 'b) -> 'a t -> 'b t =
-   fun f op -> match op with None -> None | Some v -> Some (f v)
-
-  let get : 'a t -> 'a = function
-    | Some v -> v
-    | None -> invalid_arg "Option.get"
-end
-
-module List = struct
-  include List
-
-  (** [mem_eq eq e l] is [List.mem e l] with equality function [eq]. *)
-  let rec mem_eq : 'a eq -> 'a -> 'a list -> bool =
-   fun eq elt l ->
-    match l with
-    | [] -> false
-    | x :: _ when eq x elt -> true
-    | _ :: l -> mem_eq eq elt l
-end
-
-module Unix = struct
-  include Unix
-
-  (** [mkdir_rec s p] is like [mkdir -p s] setting file permissions [p]. *)
-  let mkdir_rec : string -> file_perm -> unit =
-   fun pth perm ->
-    let reps = String.split_on_char '/' pth in
-    let rec loop rem dir =
-      match rem with
-      | [] -> Unix.mkdir dir perm
-      | p :: tl ->
-          if not (Sys.file_exists dir) then Unix.mkdir dir perm;
-          loop tl (Filename.concat dir p)
-    in
-    if Filename.is_relative pth then loop reps "." else loop reps "/"
-end
-
-module String = struct
-  include String
-
-  let drop : t -> int -> t =
-   fun s start ->
-    let len = length s in
-    if start >= len then invalid_arg "String.drop"
-    else sub s (start + 1) (len - start - 1)
-end
-
 (** Some handy Dedukti functions or aliases. *)
 module DkTools = struct
   module Mident = struct

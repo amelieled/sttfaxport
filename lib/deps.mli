@@ -1,10 +1,7 @@
 open Extras
 open Kernel
 
-module QSet : Set.S with type elt = string
-(** Sets of strings. *)
-
-val dep_of_entry : Basic.mident list -> Extras.DkTools.entry -> QSet.t
+val dep_of_entry : Basic.mident list -> Extras.DkTools.entry -> StrSet.t
 (** [dep_of_entry mds e] compute the direct dependencies of [e] which
     are not part of [mds]. *)
 

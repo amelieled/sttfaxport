@@ -1,8 +1,8 @@
 (** This file defines a full AST of STTforall.
     Informations are redundant to facilitate exportation. *)
 
+open Extras
 module B = Kernel.Basic
-module D = Deps
 
 (** {b NOTE} underscored types are monomorphic, not underscored are
     polymorphic. *)
@@ -112,8 +112,8 @@ type item =
 type kind =
   [ `Parameter | `Definition | `Axiom | `Theorem | `TypeDecl | `TypeDef ]
 
-type ast = { md : string; dep : D.QSet.t; items : item list }
-type mdeps = (string * D.QSet.t) list
+type ast = { md : string; dep : StrSet.t; items : item list }
+type mdeps = (string * StrSet.t) list
 
 let kind_of = function
   | Parameter _ -> `Parameter
