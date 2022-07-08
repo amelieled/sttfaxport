@@ -5,8 +5,8 @@ module type EXP = sig
 end
 
 let exporter sys : (module EXP) =
-        match sys with
-        | Coq -> (module Coq)
-        | Matita -> (module Matita)
-        | Pvs -> (module Pvs)
-        | _ -> assert false
+  match sys with
+  | Coq -> (module Coq)
+  | Matita -> (module Matita)
+  | Pvs -> (module Pvs)
+  | _ -> assert false
