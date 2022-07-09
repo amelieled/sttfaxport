@@ -1,3 +1,9 @@
+(rule
+ (target sttfa.dko)
+ (action
+  (run "dk" "check" "-e" "sttfa.dk"))
+ (deps sttfa.dk))
+
 (tests
  (names coq matita pvs hollight opentheory)
  (libraries sttfaxport)
