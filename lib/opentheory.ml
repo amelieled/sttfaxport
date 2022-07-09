@@ -385,14 +385,13 @@ let print_item dkenv _ = function
   | TypeDecl _ -> ()
   | TypeDef _ -> failwith "[OpenTheory] Type definitions not handled right now"
 
-(* let print_ast : Format.formatter -> ?mdeps:Ast.mdeps -> Ast.ast -> unit = *)
-(*  fun fmt ?mdeps:_ ast -> *)
-(*   Buffer.clear Format.stdbuf; *)
-(*   reset (); *)
-(*   let oc_tmp = Format.str_formatter in *)
-(*   set_oc oc_tmp; *)
-(*   version (); *)
-(*   List.iter (fun item -> print_item dkenv oc_tmp item) ast.items; *)
-(*   clean (); *)
-(*   content := Buffer.contents Format.stdbuf; *)
-(*   Format.fprintf fmt "%s" !content *)
+let print_ast oc env ast =
+  Buffer.clear Format.stdbuf;
+  reset ();
+  let oc_tmp = Format.str_formatter in
+  set_oc oc_tmp;
+  version ();
+  List.iter (fun item -> print_item env oc_tmp item) ast.items;
+  clean ();
+  content := Buffer.contents Format.stdbuf;
+  Printf.fprintf oc "%s" !content

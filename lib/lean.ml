@@ -158,10 +158,10 @@ let print_item dkenv oc = function
       Format.fprintf oc "axiom %a : %a.\n" print_name tyop print_arity arity
   | TypeDef _ -> failwith "[Lean] Type definitions not handled right now"
 
-(* let print_ast oc ast : unit = *)
-(*         let fmt = Format.formatter_of_out_channel oc in *)
-(*   StrSet.iter (print_dep fmt) ast.dep; *)
-(*   List.iter (print_item fmt) ast.items *)
+let print_ast oc env ast : unit =
+  let fmt = Format.formatter_of_out_channel oc in
+  StrSet.iter (print_dep fmt) ast.dep;
+  List.iter (print_item env fmt) ast.items
 
 (* let print_meta_ast fmt meta_ast = *)
 (*   let print_ast fmt ast = *)

@@ -1,4 +1,4 @@
 (tests
- (names coq matita pvs)
+ (names coq matita pvs hollight opentheory)
  (libraries sttfaxport)
  (deps sttfa.dk sttfa.dko connectives.dk))

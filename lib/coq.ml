@@ -121,7 +121,7 @@ let print_item oc = function
       Format.fprintf oc "Parameter %a : %a.@." print_name tyop print_arity arity
   | TypeDef _ -> ()
 
-let print_ast (oc : out_channel) ast : unit =
+let print_ast (oc : out_channel) _ ast : unit =
   cur_md := sanitize ast.md;
   let fmt = Format.formatter_of_out_channel oc in
   StrSet.iter (print_dep fmt) ast.dep;

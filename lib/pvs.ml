@@ -312,7 +312,7 @@ let print_alignment : F.formatter -> string -> StrSet.t -> A.item list -> unit =
   out "%a" pp_its (List.filter uninterpreted items);
   out "@]@,}}@\n"
 
-let print_ast (oc : out_channel) ast : unit =
+let print_ast (oc : out_channel) _ ast : unit =
   let deps = ast.Ast.dep in
   let oc = Format.formatter_of_out_channel oc in
   current_module := ast.Ast.md;

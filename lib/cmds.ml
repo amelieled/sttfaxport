@@ -44,7 +44,16 @@ let () =
 
 let export ?(path = []) ?(oc = stdout) sys file =
   List.iter Api.Files.add_path path;
-  let ast = Api.Processor.handle_files [ file ] SttfaCompile in
-  let (module Exporter) = Systems.exporter sys in
-  Exporter.print_ast oc ast;
+  let hook =
+    Api.Processor.
+      {
+        before = (fun _ -> ());
+        after =
+          (fun env _ ->
+            let (module Exporter) = Systems.exporter sys in
+            let ast = SttfaCompile.get_data env in
+            Exporter.print_ast oc env ast);
+      }
+  in
+  ignore (Api.Processor.handle_files [ file ] ~hook SttfaCompile);
   Ok ()

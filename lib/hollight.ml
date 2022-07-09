@@ -307,11 +307,10 @@ let string_of_item dkenv item =
   print_item dkenv ~short:true item;
   Format.flush_str_formatter ()
 
-(* let print_ast : Format.formatter -> ?mdeps:Ast.mdeps -> Ast.ast -> unit = *)
-(*  fun fmt ?mdeps:_ ast -> *)
-(*   Buffer.clear Format.stdbuf; *)
-(*   let oc_tmp = Format.str_formatter in *)
-(*   set_oc oc_tmp; *)
-(*   List.iter (fun item -> print_item item dkenv) ast.items; *)
-(*   content := Buffer.contents Format.stdbuf; *)
-(*   Format.fprintf fmt "%s" !content *)
+let print_ast oc env ast =
+  Buffer.clear Format.stdbuf;
+  let oc_tmp = Format.str_formatter in
+  set_oc oc_tmp;
+  List.iter (print_item env) ast.items;
+  content := Buffer.contents Format.stdbuf;
+  Printf.fprintf oc "%s" !content

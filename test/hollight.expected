@@ -1,0 +1,92 @@
+new_constant("mat_True",`:bool`);;
+
+new_constant("mat_False",`:bool`);;
+
+new_constant("mat_Not",`:bool -> bool`);;
+
+new_constant("mat_And",`:bool -> (bool -> bool)`);;
+
+new_constant("mat_Or",`:bool -> (bool -> bool)`);;
+
+new_constant("ex",`:(A -> bool) -> bool`);;
+
+new_constant("equal",`:A -> (A -> bool)`);;
+
+(*i :  |- `mat_True`*)
+let i =
+
+ new_axiom `mat_True`
+ ;;
+
+(*falsity :  |- `! t : bool. (mat_False ==> t)`*)
+let falsity =
+
+ new_axiom `! t : bool. (mat_False ==> (t : bool))`
+ ;;
+
+(*nmk :  |- `! A : bool. ((A ==> mat_False) ==> (mat_Not A))`*)
+let nmk =
+
+ new_axiom `! A : bool. (((A : bool) ==> mat_False) ==> (mat_Not (A : bool)))`
+ ;;
+
+(*not_ind :  |- `! A : bool. (! Q : bool. (((A ==> mat_False) ==> Q) ==> ((mat_Not A) ==> Q)))`*)
+let not_ind =
+
+ new_axiom `! A : bool. (! Q : bool. ((((A : bool) ==> mat_False) ==> (Q : bool)) ==> ((mat_Not (A : bool)) ==> (Q : bool))))`
+ ;;
+
+(*conj :  |- `! A : bool. (! B : bool. (A ==> (B ==> ((mat_And A) B))))`*)
+let conj =
+
+ new_axiom `! A : bool. (! B : bool. ((A : bool) ==> ((B : bool) ==> ((mat_And (A : bool)) (B : bool)))))`
+ ;;
+
+(*match_And_prop :  |- `! A : bool. (! B : bool. (! return : bool. ((A ==> (B ==> return)) ==> (((mat_And A) B) ==> return))))`*)
+let match_And_prop =
+
+ new_axiom `! A : bool. (! B : bool. (! return : bool. (((A : bool) ==> ((B : bool) ==> (return : bool))) ==> (((mat_And (A : bool)) (B : bool)) ==> (return : bool)))))`
+ ;;
+
+(*or_introl :  |- `! A : bool. (! B : bool. (A ==> ((mat_Or A) B)))`*)
+let or_introl =
+
+ new_axiom `! A : bool. (! B : bool. ((A : bool) ==> ((mat_Or (A : bool)) (B : bool))))`
+ ;;
+
+(*or_intror :  |- `! A : bool. (! B : bool. (B ==> ((mat_Or A) B)))`*)
+let or_intror =
+
+ new_axiom `! A : bool. (! B : bool. ((B : bool) ==> ((mat_Or (A : bool)) (B : bool))))`
+ ;;
+
+(*match_Or_prop :  |- `! A : bool. (! B : bool. (! return : bool. ((A ==> return) ==> ((B ==> return) ==> (((mat_Or A) B) ==> return)))))`*)
+let match_Or_prop =
+
+ new_axiom `! A : bool. (! B : bool. (! return : bool. (((A : bool) ==> (return : bool)) ==> (((B : bool) ==> (return : bool)) ==> (((mat_Or (A : bool)) (B : bool)) ==> (return : bool))))))`
+ ;;
+
+(*ex_intro :  |- `! P : A -> bool. (! x : A. ((P x) ==> (ex P)))`*)
+let ex_intro =
+
+ new_axiom `! P : A -> bool. (! x : A. (((P : A -> bool) (x : A)) ==> ((ex : (A -> bool) -> bool) (P : A -> bool))))`
+ ;;
+
+(*match_ex_prop :  |- `! P : A -> bool. (! return : bool. ((! x : A. ((P x) ==> return)) ==> ((ex P) ==> return)))`*)
+let match_ex_prop =
+
+ new_axiom `! P : A -> bool. (! return : bool. ((! x : A. (((P : A -> bool) (x : A)) ==> (return : bool))) ==> (((ex : (A -> bool) -> bool) (P : A -> bool)) ==> (return : bool))))`
+ ;;
+
+(*refl_equal :  |- `! x : A. ((equal x) x)`*)
+let refl_equal =
+
+ new_axiom `! x : A. (((equal : A -> (A -> bool)) (x : A)) (x : A))`
+ ;;
+
+(*equal_leibniz :  |- `! x : A. (! y : A. (((equal x) y) ==> (! P : A -> bool. ((P x) ==> (P y)))))`*)
+let equal_leibniz =
+
+ new_axiom `! x : A. (! y : A. ((((equal : A -> (A -> bool)) (x : A)) (y : A)) ==> (! P : A -> bool. (((P : A -> bool) (x : A)) ==> ((P : A -> bool) (y : A))))))`
+ ;;
+
