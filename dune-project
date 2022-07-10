@@ -7,7 +7,7 @@
 (package
  (name sttfaxport)
  (synopsis "An exporter for files written in the STTfa logic.")
- (depends ocaml
+ (depends (ocaml (>= 4.08))
           dune
-          logs
+          (logs (>= 0.7))
           (dedukti (>= 2.7))))

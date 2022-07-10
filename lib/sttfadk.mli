@@ -1,4 +1,5 @@
-(** This module give an interface for Dedukti symbols use to represent the STTforall logic. *)
+(** This module give an interface for Dedukti symbols use to represent the
+    STTforall logic. *)
 
 open Kernel
 
