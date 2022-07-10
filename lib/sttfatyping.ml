@@ -11,6 +11,7 @@ module Subst = Kernel.Subst
 
 module CType = Compile_type
 module CTerm = Compile_term
+open Result.Monad
 
 let infer dkenv env _te =
   let tedk = Decompile.decompile__term env.dk _te in
@@ -315,12 +316,12 @@ module Tracer = struct
         CTerm.compile__term dkenv env _tedk'
 
   let _reduce dkenv env ctx redex _te =
-    let newterm = newterm dkenv env ctx redex in
-    _apply ctx newterm _te
+    let* newterm = newterm dkenv env ctx redex in
+    return @@ _apply ctx newterm _te
 
   let reduce dkenv env ctx redex te =
-    let newterm = newterm dkenv env ctx redex in
-    apply ctx newterm te
+    let* newterm = newterm dkenv env ctx redex in
+    return @@ apply ctx newterm te
 
   type 'a step = { is_left : bool; redex : redex; ctx : ctx list }
 
@@ -330,94 +331,96 @@ module Tracer = struct
     let is_left, ctx, redex = _get_redex dkenv (env, env) [] (left, right) in
     if is_left then
       let env' = _env_of_redex env ctx left in
-      let left' = _reduce dkenv env' ctx redex left in
+      let* left' = _reduce dkenv env' ctx redex left in
       let step = get_step is_left redex ctx in
-      (step, left', right)
+      return (step, left', right)
     else
       let env' = _env_of_redex env ctx right in
-      let right' = _reduce dkenv env' ctx redex right in
+      let* right' = _reduce dkenv env' ctx redex right in
       let step = get_step is_left redex ctx in
-      (step, left, right')
+      return (step, left, right')
 
   let one_step dkenv env left right =
     let is_left, ctx, redex = get_redex dkenv (env, env) [] (left, right) in
     if is_left then
       let env' = env_of_redex env ctx left in
-      let left' = reduce dkenv env' ctx redex left in
+      let* left' = reduce dkenv env' ctx redex left in
       let step = get_step is_left redex ctx in
-      (step, left', right)
+      return (step, left', right)
     else
       let env' = env_of_redex env ctx right in
-      let right' = reduce dkenv env' ctx redex right in
+      let* right' = reduce dkenv env' ctx redex right in
       let step = get_step is_left redex ctx in
-      (step, left, right')
+      return (step, left, right')
 
   let empty_trace = { left = []; right = [] }
 
   let rec _annotate_beta dkenv env _te =
-    if _is_beta_normal dkenv env _te then ([], _te)
+    if _is_beta_normal dkenv env _te then return ([], _te)
     else
       let ctx, redex = _get_beta_redex env [] _te in
       let env' = _env_of_redex env ctx _te in
-      let _te' = _reduce dkenv env' ctx redex _te in
-      let trace, _tenf = _annotate_beta dkenv env _te' in
-      ((redex, ctx) :: trace, _tenf)
+      let* _te' = _reduce dkenv env' ctx redex _te in
+      let* trace, _tenf = _annotate_beta dkenv env _te' in
+      return ((redex, ctx) :: trace, _tenf)
 
   let rec annotate_beta dkenv env te =
-    if is_beta_normal dkenv env te then ([], te)
+    if is_beta_normal dkenv env te then return ([], te)
     else
       let ctx, redex = get_beta_redex env [] te in
       let env' = env_of_redex env ctx te in
-      let te' = reduce dkenv env' ctx redex te in
-      let trace, tenf = annotate_beta dkenv env te' in
-      ((redex, ctx) :: trace, tenf)
+      let* te' = reduce dkenv env' ctx redex te in
+      let* trace, tenf = annotate_beta dkenv env te' in
+      return ((redex, ctx) :: trace, tenf)
 
   let annotate_beta dkenv env te =
-    if !fast then ([], te) else annotate_beta dkenv env te
+    if !fast then return ([], te) else annotate_beta dkenv env te
 
   let rec _annotate dkenv env left right =
-    if _eq env left right then empty_trace
+    if _eq env left right then return empty_trace
     else
-      let tracel, left' = _annotate_beta dkenv env left in
-      let tracer, right' = _annotate_beta dkenv env right in
+      let* tracel, left' = _annotate_beta dkenv env left in
+      let* tracer, right' = _annotate_beta dkenv env right in
       let trace_beta = { left = tracel; right = tracer } in
-      if _eq env left' right' then trace_beta
+      if _eq env left' right' then return trace_beta
       else
-        let step, left', right' = _one_step dkenv env left' right' in
-        let trace' = _annotate dkenv env left' right' in
+        let* step, left', right' = _one_step dkenv env left' right' in
+        let* trace' = _annotate dkenv env left' right' in
         let trace'' =
           if step.is_left then
             { trace' with left = (step.redex, step.ctx) :: trace'.left }
           else { trace' with right = (step.redex, step.ctx) :: trace'.right }
         in
-        {
-          left = trace_beta.left @ trace''.left;
-          right = trace_beta.right @ trace''.right;
-        }
+        return
+          {
+            left = trace_beta.left @ trace''.left;
+            right = trace_beta.right @ trace''.right;
+          }
 
   let _annotate dkenv env left right =
-    if !fast then empty_trace else _annotate dkenv env left right
+    if !fast then return empty_trace else _annotate dkenv env left right
 
   let rec annotate dkenv env left right =
-    if eq env left right then empty_trace
+    if eq env left right then return empty_trace
     else
-      let tracel, left' = annotate_beta dkenv env left in
-      let tracer, right' = annotate_beta dkenv env right in
+      let* tracel, left' = annotate_beta dkenv env left in
+      let* tracer, right' = annotate_beta dkenv env right in
       let trace_beta = { left = tracel; right = tracer } in
-      if eq env left' right' then trace_beta
+      if eq env left' right' then return trace_beta
       else
-        let step, left', right' = one_step dkenv env left' right' in
-        let trace' = annotate dkenv env left' right' in
+        let* step, left', right' = one_step dkenv env left' right' in
+        let* trace' = annotate dkenv env left' right' in
         let trace'' =
           if step.is_left then
             { trace' with left = (step.redex, step.ctx) :: trace'.left }
           else { trace' with right = (step.redex, step.ctx) :: trace'.right }
         in
-        {
-          left = trace_beta.left @ trace''.left;
-          right = trace_beta.right @ trace''.right;
-        }
+        return
+          {
+            left = trace_beta.left @ trace''.left;
+            right = trace_beta.right @ trace''.right;
+          }
 
   let annotate dkenv env left right =
-    if !fast then empty_trace else annotate dkenv env left right
+    if !fast then return empty_trace else annotate dkenv env left right
 end

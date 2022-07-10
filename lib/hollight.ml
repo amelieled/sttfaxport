@@ -1,9 +1,12 @@
+open Extras
 open Ast
-open Compile
 open Holstt.HolSTT
 open Environ
+open Result.Monad
 
-(* The memoization of Openstt is not efficient and can be highly increased. For that, the memoization of openstt should be turned off and the memoization should be done in this module. One may also want to handle alpha-renaming *)
+(* The memoization of Openstt is not efficient and can be highly increased. For
+   that, the memoization of openstt should be turned off and the memoization
+   should be done in this module. One may also want to handle alpha-renaming *)
 
 module Conv = Sttfatyping.ComputeStrategy
 
@@ -111,7 +114,7 @@ let rec mk__te dkenv ctx conflicts avoid ?(total = false) =
       in
       let _ty = Api.Env.infer dkenv ~ctx:ctx.dk cst' in
       let _ty' =
-        CType.compile_wrapped__type dkenv ctx
+        Compile_type.compile_wrapped__type dkenv ctx
           (Api.Env.unsafe_reduction dkenv ~red:Conv.beta_only _ty)
       in
       let cst'' = sanitize true (snd cst) in
@@ -135,20 +138,20 @@ let rec _ty_of_ty = function ForallK (_, t) -> _ty_of_ty t | Ty t -> t
 
 let thm_of_const dkenv cst =
   let cst_name = sanitize true (snd cst) in
-  try thm_of_const_name cst_name
+  try return (thm_of_const_name cst_name)
   with Failure _ ->
     let name = Environ.name_of cst in
     let term = Term.mk_Const Basic.dloc name in
     let te = Api.Env.unsafe_reduction dkenv ~red:(Conv.delta name) term in
-    let te' = CTerm.compile_term dkenv Environ.empty_env te in
+    let* te' = Compile_term.compile_term dkenv Environ.empty_env te in
     let te' = mk_te dkenv empty_env [] te' in
     let ty = Api.Env.infer dkenv term in
-    let ty' = CType.compile_wrapped_type dkenv Environ.empty_env ty in
+    let ty' = Compile_type.compile_wrapped_type dkenv Environ.empty_env ty in
     let ty' = mk_ty ty' in
     let const = const_of_name cst_name in
     let constterm = term_of_const const ty' in
     let eq = mk_equal_term constterm te' ty' in
-    mk_def cst_name cst_name eq ty'
+    return (mk_def cst_name cst_name eq ty')
 
 let add_prf_ctx env id _te _te' =
   {
@@ -268,8 +271,14 @@ let print_item dkenv ?(short = false) = function
         let eq =
           mk_equal_term (term_of_const (const_of_name cst') ty') te' ty'
         in
-        let (Sequent (_, _, _, pi)) = thm_of_const dkenv cst in
-        if short then print_term false !oc eq else mk_thm cst' eq (mk_hyp []) pi
+        match thm_of_const dkenv cst with
+        | Ok (Sequent (_, _, _, pi)) ->
+            if short then print_term false !oc eq
+            else mk_thm cst' eq (mk_hyp []) pi
+        | Error _ ->
+            (* TODO error printing *)
+            Format.eprintf "[HOLLIGHT]";
+            exit 1
       with _ -> assert false)
   | Axiom (cst, te) ->
       let te' = mk_te dkenv empty_env [] te in

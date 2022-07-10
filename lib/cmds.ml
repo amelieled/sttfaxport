@@ -22,12 +22,8 @@ module SttfaCompile = struct
     let modu = Api.Env.get_name env in
     let items = List.rev !items in
     let dep = List.fold_left StrSet.union StrSet.empty (List.map snd items) in
-    Ast.
-      {
-        md = Kernel.Basic.string_of_mident modu;
-        dep;
-        items = List.map fst items;
-      }
+    let items = List.map (fun i -> Result.get_ok (fst i)) items in
+    Ast.{ md = Kernel.Basic.string_of_mident modu; dep; items }
 end
 
 type _ Api.Processor.t += SttfaCompile : Ast.ast Api.Processor.t

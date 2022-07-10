@@ -4,11 +4,7 @@ module Basic = Kernel.Basic
 module Signature = Kernel.Signature
 module F = Format
 
-let extension = "pvs"
-let system = `Pvs
 let line oc fmt = F.fprintf oc (fmt ^^ "\n")
-let sys = "pvs"
-let current_module : string ref = ref ""
 
 let sanitize_name_pvs : string -> string =
  fun n ->
@@ -315,7 +311,6 @@ let print_alignment : F.formatter -> string -> StrSet.t -> A.item list -> unit =
 let print_ast (oc : out_channel) _ ast : unit =
   let deps = ast.Ast.dep in
   let oc = Format.formatter_of_out_channel oc in
-  current_module := ast.Ast.md;
   (* REVIEW: transitive deps should be removed *)
   (* Actual theory *)
   line oc "%s_sttfa : THEORY" ast.md;
