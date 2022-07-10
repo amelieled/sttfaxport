@@ -1,3 +1,6 @@
+open Extras
+open Result.Monad
+
 module BasicHol = struct
   (* Defining basic hol structures: terms, types, proofs *)
   (* Inspired from HOL Light fusion files *)
@@ -386,8 +389,9 @@ module HolSTT = struct
 
   (** Finding the definition theorem associated with a constant *)
   let thm_of_const_name name =
-    if Hashtbl.mem defined_csts name then fst @@ Hashtbl.find defined_csts name
-    else failwith (Format.sprintf "Const %s not found" name)
+    if Hashtbl.mem defined_csts name then
+      return @@ fst @@ Hashtbl.find defined_csts name
+    else Error (`HolsttConstNotFound name)
 
   (** Printing theorems *)
   let mk_thm name term hyp pi =
@@ -398,9 +402,4 @@ module HolSTT = struct
 
   (** Printing parameters *)
   let mk_parameter name ty = print_parameter name ty !oc
-
-  (** Finding theorem using its name *)
-  let thm_of_lemma name =
-    if Hashtbl.mem defined_thms name then Hashtbl.find defined_thms name
-    else failwith (Format.sprintf "Theorem %s not found" name)
 end

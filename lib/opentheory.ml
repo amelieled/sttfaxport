@@ -113,7 +113,7 @@ let thm_of_const dkenv cst =
     let name = Environ.name_of cst in
     let term = Term.mk_Const Basic.dloc name in
     let te = Api.Env.unsafe_reduction dkenv ~red:(Conv.delta name) term in
-    let* te' = Compile_term.compile_term dkenv Environ.empty_env te in
+    let* te' = Compile_type.compile_term dkenv Environ.empty_env te in
     let te' = mk_te dkenv empty_env te' in
     let ty = Api.Env.infer dkenv term in
     let ty' = Compile_type.compile_wrapped_type dkenv Environ.empty_env ty in
@@ -260,7 +260,7 @@ let rec mk_proof dkenv env =
       try return @@ thm_of_lemma (mk_qid cst)
       with _ ->
         let te = Api.Env.get_type dkenv dloc (name_of cst) in
-        let* te = Compile_term.compile_wrapped_term dkenv empty_env te in
+        let* te = Compile_type.compile_wrapped_term dkenv empty_env te in
         return @@ mk_axiom (mk_hyp []) (mk_te dkenv empty_env te))
   | ForallE (_, proof, u) -> (
       match (judgment_of proof).thm with

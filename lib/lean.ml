@@ -5,8 +5,6 @@ module Signature = Kernel.Signature
 
 let sys = "lean"
 
-module CType = Compile_type
-
 let theorems =
   [ "refl"; "eq"; "pred"; "le"; "lt"; "decidable_lt"; "decidable_le" ]
 
@@ -130,7 +128,7 @@ let rec is__computable dkenv (_te : _te) =
       let open Basic in
       let name = mk_name (mk_mident cmd) (mk_ident cid) in
       let ty = Api.Env.get_type dkenv dloc name in
-      let ty' = CType.compile_wrapped_type dkenv Environ.empty_env ty in
+      let ty' = Compile_type.compile_wrapped_type dkenv Environ.empty_env ty in
       is_prop ty'
       || (not @@ DkTools.is_static (Api.Env.get_signature dkenv) dloc name)
 

@@ -9,18 +9,16 @@ module Subst = Kernel.Subst
 
 (* TODO: Enhance error messages *)
 
-module CType = Compile_type
-module CTerm = Compile_term
 open Result.Monad
 
 let infer dkenv env _te =
   let tedk = Decompile.decompile__term env.dk _te in
-  CType.compile_type dkenv env (Api.Env.infer dkenv ~ctx:env.dk tedk)
+  Compile_type.compile_type dkenv env (Api.Env.infer dkenv ~ctx:env.dk tedk)
 
 let _infer dkenv env _te =
   let tedk = Decompile.decompile__term env.dk _te in
   let ty = Api.Env.infer dkenv ~ctx:env.dk tedk in
-  try CType.compile__type dkenv env ty
+  try Compile_type.compile__type dkenv env ty
   with _ ->
     Format.eprintf "Sttfa monomorphic inference error";
     exit 1
@@ -99,21 +97,21 @@ let _beta_reduce dkenv env _te =
   let _tedk' =
     Api.Env.unsafe_reduction dkenv ~red:(ComputeStrategy.beta_steps 1) _tedk
   in
-  CTerm.compile__term dkenv env _tedk'
+  Compile_type.compile__term dkenv env _tedk'
 
 let beta_reduce dkenv env te =
   let tedk = Decompile.decompile_term env.dk te in
   let tedk' =
     Api.Env.unsafe_reduction dkenv ~red:(ComputeStrategy.beta_steps 1) tedk
   in
-  CTerm.compile_term dkenv env tedk'
+  Compile_type.compile_term dkenv env tedk'
 
 let beta_normal dkenv env te =
   let tedk = Decompile.decompile_term env.dk te in
   let tedk' =
     Api.Env.unsafe_reduction dkenv ~red:ComputeStrategy.beta_snf tedk
   in
-  CTerm.compile_term dkenv env tedk'
+  Compile_type.compile_term dkenv env tedk'
 
 let subst dkenv env f a =
   let thm = (judgment_of f).thm in
@@ -125,7 +123,7 @@ let subst dkenv env f a =
   let b' = Subst.subst b a in
   let b' = match b' with Term.App (_, a, []) -> a | _ -> assert false in
   let b' = Api.Env.unsafe_reduction dkenv ~red:ComputeStrategy.beta_one b' in
-  CTerm.compile_term dkenv env b'
+  Compile_type.compile_term dkenv env b'
 
 (** This module aims to implement functions that trace reduction steps
     checking if two terms are convertible. *)
@@ -298,7 +296,7 @@ module Tracer = struct
     match redex with
     | Beta _te ->
         let _tedk = Decompile.decompile__term env.dk _te in
-        CTerm.compile__term dkenv env
+        Compile_type.compile__term dkenv env
           (Api.Env.unsafe_reduction dkenv ~red:ComputeStrategy.beta_one _tedk)
     | Delta (cst, _tys) ->
         let name = name_of cst in
@@ -313,7 +311,7 @@ module Tracer = struct
             ~red:(ComputeStrategy.beta_steps (List.length _tys))
             _tedk'
         in
-        CTerm.compile__term dkenv env _tedk'
+        Compile_type.compile__term dkenv env _tedk'
 
   let _reduce dkenv env ctx redex _te =
     let* newterm = newterm dkenv env ctx redex in

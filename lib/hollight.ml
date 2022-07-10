@@ -138,12 +138,12 @@ let rec _ty_of_ty = function ForallK (_, t) -> _ty_of_ty t | Ty t -> t
 
 let thm_of_const dkenv cst =
   let cst_name = sanitize true (snd cst) in
-  try return (thm_of_const_name cst_name)
+  try thm_of_const_name cst_name
   with Failure _ ->
     let name = Environ.name_of cst in
     let term = Term.mk_Const Basic.dloc name in
     let te = Api.Env.unsafe_reduction dkenv ~red:(Conv.delta name) term in
-    let* te' = Compile_term.compile_term dkenv Environ.empty_env te in
+    let* te' = Compile_type.compile_term dkenv Environ.empty_env te in
     let te' = mk_te dkenv empty_env [] te' in
     let ty = Api.Env.infer dkenv term in
     let ty' = Compile_type.compile_wrapped_type dkenv Environ.empty_env ty in
