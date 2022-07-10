@@ -1,22 +1,8 @@
+open Extras
 open Ast
 open Kernel.Basic
 module Basic = Kernel.Basic
 module Term = Kernel.Term
-
-let package = ref ""
-
-let set_package file =
-  let path = Filename.dirname file in
-  let sep = Filename.dir_sep in
-  assert (String.length sep = 1);
-  let sep = String.get sep 0 in
-  match List.rev @@ String.split_on_char sep path with
-  | [] ->
-      failwith
-        "Files should be in a directory (which is interpreted as a package)"
-  | x :: _ -> package := x
-
-let renaming = ref true
 
 (* Use a list rather than a sec for List.mem_assoc *)
 type proof_ctx = (string * _te) list
@@ -94,73 +80,36 @@ let rec drop i l =
   if i = 0 then l
   else match l with [] -> assert false | _ :: l -> drop (i - 1) l
 
-module StringxType = struct
-  type t = string * _ty
-
-  let compare = Stdlib.compare
-end
-
-(*
-module TVars = Set.Make(StringxType)
-*)
-module Vars = Set.Make (String)
-
-let gen_fresh_set varlist v =
-  let rec gen_fresh_set_rec varlist v i =
-    let new_v = v ^ string_of_int i in
-    if List.mem new_v varlist then gen_fresh_set_rec varlist v (i + 1)
-    else new_v
-  in
-  gen_fresh_set_rec varlist v 0
-
-let variables t =
-  let rec variables_rec set_var = function
-    | TeVar s -> Vars.add s set_var
-    | Abs (v, _, t) -> variables_rec (Vars.add v set_var) t
-    | App (t1, t2) ->
-        Vars.union (variables_rec set_var t1) (variables_rec set_var t2)
-    | Forall (v, _, t) -> variables_rec (Vars.add v set_var) t
-    | Impl (t1, t2) ->
-        Vars.union (variables_rec set_var t1) (variables_rec set_var t2)
-    | AbsTy (_, t) -> variables_rec set_var t
-    | Cst _ -> set_var
-  in
-  variables_rec Vars.empty t
-(*
-let benign_spec = function
-  | TeVar(v1),Forall(v2,_,_) when v1=v2-> true
-  | _ -> false*)
-
 let frees t =
   let rec frees_rec set_var = function
-    | TeVar s -> Vars.add s set_var
+    | TeVar s -> StrSet.add s set_var
     | Abs (v, _, t) ->
         let set_vars_t = frees_rec set_var t in
-        Vars.union set_var (Vars.remove v set_vars_t)
-    | App (t1, t2) -> Vars.union (frees_rec set_var t1) (frees_rec set_var t2)
+        StrSet.union set_var (StrSet.remove v set_vars_t)
+    | App (t1, t2) -> StrSet.union (frees_rec set_var t1) (frees_rec set_var t2)
     | Forall (v, _, t) ->
         let set_vars_t = frees_rec set_var t in
-        Vars.union set_var (Vars.remove v set_vars_t)
-    | Impl (t1, t2) -> Vars.union (frees_rec set_var t1) (frees_rec set_var t2)
+        StrSet.union set_var (StrSet.remove v set_vars_t)
+    | Impl (t1, t2) -> StrSet.union (frees_rec set_var t1) (frees_rec set_var t2)
     | AbsTy (_, t) -> frees_rec set_var t
     | Cst _ -> set_var
   in
-  frees_rec Vars.empty t
+  frees_rec StrSet.empty t
 
 let frees_ty ty =
   let rec frees_ty_rec set_var = function
-    | TyVar s -> Vars.add s set_var
+    | TyVar s -> StrSet.add s set_var
     | Arrow (tyl, tyr) ->
-        Vars.union (frees_ty_rec set_var tyl) (frees_ty_rec set_var tyr)
+        StrSet.union (frees_ty_rec set_var tyl) (frees_ty_rec set_var tyr)
     | TyOp (_, tys) ->
         let list_var_tys = List.map (frees_ty_rec set_var) tys in
         let set_vars_tys =
-          List.fold_left (fun s1 s2 -> Vars.union s1 s2) Vars.empty list_var_tys
+          List.fold_left (fun s1 s2 -> StrSet.union s1 s2) StrSet.empty list_var_tys
         in
         set_vars_tys
-    | Prop -> Vars.empty
+    | Prop -> StrSet.empty
   in
-  frees_ty_rec Vars.empty ty
+  frees_ty_rec StrSet.empty ty
 
 (*let deep_alpha varlist t set_var =
     let rename_list = List.map (fun v -> (v,gen_fresh_set set_var v)) varlist in
@@ -180,7 +129,7 @@ let frees_ty ty =
   let resolve_spec_conflict t1 t2 =
     if benign_spec(t1,t2) then t2
     else
-      let frees_t1 = Vars.elements (frees t1) in
+      let frees_t1 = StrSet.elements (frees t1) in
       let variables_t2 = variables t2 in
-      deep_alpha frees_t1 t2 (Vars.elements variables_t2)
+      deep_alpha frees_t1 t2 (StrSet.elements variables_t2)
 *)

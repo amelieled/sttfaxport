@@ -31,6 +31,8 @@ let forbidden_id =
       "exp";
     ]
 
+module Vars = StrSet
+
 let sanitize b id =
   let u_id = String.uncapitalize_ascii id in
   if List.mem id !forbidden_id || List.mem u_id !forbidden_id then
