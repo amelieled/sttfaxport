@@ -24,7 +24,7 @@ let rec compile__type env _ty =
       let args' = List.map (fun x -> compile__type env x) (a :: args) in
       TyOp (tyop', args')
   | Term.Const _ -> TyOp (compile_tyop _ty, [])
-  | _ -> assert false
+  | Kind | Type _ | Lam _ | Pi _ -> assert false
 
 let compile__type dkenv env _ty =
   let _ty =
@@ -52,9 +52,7 @@ let compile_wrapped__type dkenv env (ty : Term.term) =
       compile__type dkenv env a
   | Term.App (cst, a, []) when is_sttfa_const sttfa_eta cst ->
       compile__type dkenv env a
-  | _ ->
-      Format.eprintf "%a@." Dpp.print_term ty;
-      assert false
+  | _ -> assert false
 
 let compile_wrapped_type dkenv env (ty : Term.term) =
   match ty with
@@ -62,9 +60,7 @@ let compile_wrapped_type dkenv env (ty : Term.term) =
       compile_type dkenv env a
   | Term.App (cst, a, []) when is_sttfa_const sttfa_eta cst ->
       Ty (compile__type dkenv env a)
-  | _ ->
-      Format.eprintf "%a@." Dpp.print_term ty;
-      assert false
+  | _ -> assert false
 
 let rec compile_type_definition dkenv env (ty : Term.term) =
   match ty with

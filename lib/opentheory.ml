@@ -223,8 +223,8 @@ let rec mk_ctx dkenv env thm ctx left right =
   | _, _, _ -> assert false
 
 let mk_rewrite_step dkenv env term (redex, ctx) =
-  let env' = Sttfatyping.Tracer.env_of_redex env ctx term in
-  let* term' = Sttfatyping.Tracer.reduce dkenv env' ctx redex term in
+  let env' = Tracer.env_of_redex env ctx term in
+  let* term' = Tracer.reduce dkenv env' ctx redex term in
   let* thm =
     match redex with
     | Delta (name, _tys) -> mk_delta dkenv env' name _tys

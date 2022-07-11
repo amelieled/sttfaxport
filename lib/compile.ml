@@ -66,7 +66,7 @@ let rec compile_proof dkenv env proof : (_, [> p_error ]) result =
         (a :: args)
   | x -> Error (`CompileProofUnhandled x)
 
-and compile_arg dkenv env j f' a : (_, [> p_error ]) result =
+and compile_arg dkenv env j f' a : (_, [> Compile_type.error | p_error]) result =
   let* te = Sttfatyping.subst dkenv env f' a in
   let j' = { j with thm = te } in
   let* j, f' = get_product dkenv env j f' in
@@ -77,7 +77,7 @@ and compile_arg dkenv env j f' a : (_, [> p_error ]) result =
   | Te (Forall _) ->
       let* a' = Compile_type.compile__term dkenv env a in
       let proof = ForallE (j', f', a') in
-      let* rws, after = Sttfatyping.Tracer.annotate_beta dkenv env j'.thm in
+      let* rws, after = Tracer.annotate_beta dkenv env j'.thm in
       let trace = { left = rws; right = [] } in
       let j' = { j with thm = after } in
       return (j', Conv (j', proof, trace))
@@ -89,7 +89,7 @@ and compile_arg dkenv env j f' a : (_, [> p_error ]) result =
       if Sttfatyping._eq env inferred expected then
         return (j', ImplE (j', f', a'))
       else
-        let* trace = Sttfatyping.Tracer._annotate dkenv env inferred expected in
+        let* trace = Tracer._annotate dkenv env inferred expected in
         let f' = Conv ({ j with thm = Te expected }, f', trace) in
         return (j', ImplE (j', f', a'))
   | Te _ as thm -> Error (`CompileProofUnhandledThm thm)
@@ -98,9 +98,9 @@ and get_product dkenv env j f' : (_, [> p_error ]) result =
   match j.thm with
   | ForallP _ | Te (Forall _) | Te (Impl _) -> return (j, f')
   | Te tyfl ->
-      let _, ctx, redex = Sttfatyping.Tracer.get_app_redex dkenv true [] tyfl in
-      let* tyfr = Sttfatyping.Tracer._reduce dkenv env ctx redex tyfl in
-      let* trace = Sttfatyping.Tracer._annotate dkenv env tyfl tyfr in
+      let _, ctx, redex = Tracer.get_app_redex dkenv true [] tyfl in
+      let* tyfr = Tracer._reduce dkenv env ctx redex tyfl in
+      let* trace = Tracer._annotate dkenv env tyfl tyfr in
       let j' = { j with thm = Te tyfr } in
       let proof' = Conv (j', f', trace) in
       get_product dkenv env j' proof'
@@ -138,7 +138,7 @@ let compile_definition dkenv name ty term =
       let* proof' =
         if j.thm = a' then return proof
         else
-          let* trace = Sttfatyping.Tracer.annotate dkenv empty_env j.thm a' in
+          let* trace = Tracer.annotate dkenv empty_env j.thm a' in
           return @@ Conv ({ j with thm = a' }, proof, trace)
       in
       let* te = Compile_type.compile_term dkenv empty_env a in
