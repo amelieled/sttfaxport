@@ -10,12 +10,11 @@ Requirements
 
 - ocaml (probably greater than 4.08)
 - dedukti >= 2.7
-- logs
 
 API
 ---
 
-The main API is given in `lib/cmds.mli`.
+The main API is given in `lib/systems.mli`.
 
 Architecture
 ------------

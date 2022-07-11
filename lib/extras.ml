@@ -1,8 +1,4 @@
-type 'a eq = 'a -> 'a -> bool
-(** Type of equality function. *)
-
-type 'a pp = Format.formatter -> 'a -> unit
-(** Type of a pretty printer. *)
+(** Extensions to the standard library. *)
 
 module StrSet = Set.Make (String)
 

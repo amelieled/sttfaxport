@@ -90,7 +90,8 @@ let frees t =
     | Forall (v, _, t) ->
         let set_vars_t = frees_rec set_var t in
         StrSet.union set_var (StrSet.remove v set_vars_t)
-    | Impl (t1, t2) -> StrSet.union (frees_rec set_var t1) (frees_rec set_var t2)
+    | Impl (t1, t2) ->
+        StrSet.union (frees_rec set_var t1) (frees_rec set_var t2)
     | AbsTy (_, t) -> frees_rec set_var t
     | Cst _ -> set_var
   in
@@ -104,7 +105,9 @@ let frees_ty ty =
     | TyOp (_, tys) ->
         let list_var_tys = List.map (frees_ty_rec set_var) tys in
         let set_vars_tys =
-          List.fold_left (fun s1 s2 -> StrSet.union s1 s2) StrSet.empty list_var_tys
+          List.fold_left
+            (fun s1 s2 -> StrSet.union s1 s2)
+            StrSet.empty list_var_tys
         in
         set_vars_tys
     | Prop -> StrSet.empty

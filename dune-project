@@ -9,5 +9,4 @@
  (synopsis "An exporter for files written in the STTfa logic.")
  (depends (ocaml (>= 4.08))
           dune
-          (logs (>= 0.7))
           (dedukti (>= 2.7))))

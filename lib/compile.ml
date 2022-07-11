@@ -156,11 +156,9 @@ let compile_entry env entry =
   match entry with
   | Parsers.Entry.Decl (l, id, sc, st, ty) ->
       Api.Env.declare env l id sc st ty;
-      Logs.debug (fun m -> m "Compiling decl \"%a\"" Dpp.print_ident id);
       compile_declaration env (Basic.mk_name md id) ty
   | Def (l, id, sc, f, Some ty, te) ->
       Api.Env.define env l id sc f te (Some ty);
-      Logs.debug (fun m -> m "Compiling def \"%a\"" Dpp.print_ident id);
       compile_definition env (Basic.mk_name md id) ty te
   | Def _ -> Error `CompileDefnWithoutType
   | Rules _ -> Error `CompileRewriteRule

@@ -1,6 +1,6 @@
 open Sttfaxport
 
 let () =
-  match Cmds.export Systems.Coq "connectives.dk" with
+  match Systems.(export Coq "connectives.dk") with
   | Ok () -> ()
   | Error _ -> exit 1

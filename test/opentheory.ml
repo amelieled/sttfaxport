@@ -1,6 +1,6 @@
 open Sttfaxport
 
 let () =
-  match Cmds.export Systems.OpenTheory "connectives.dk" with
+  match Systems.(export OpenTheory "connectives.dk") with
   | Ok () -> ()
   | Error _ -> exit 1
