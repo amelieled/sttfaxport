@@ -1,3 +1,4 @@
 (library
  (name sttfaxport)
+ (public_name sttfaxport)
  (libraries dedukti.kernel dedukti.api dedukti.parsers str))

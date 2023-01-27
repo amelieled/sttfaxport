@@ -60,10 +60,13 @@ let export ?(path = []) ?(oc = stdout) sys file =
       {
         before = (fun _ -> ());
         after =
-          (fun env _ ->
+          (fun env s ->
+            ( match s with
+            | Some (env, lc, exn) -> Api.Env.fail_env_error env lc exn
+            | None -> () );
             let (module Exporter) = exporter sys in
             let ast = SttfaCompile.get_data env in
-            Exporter.print_ast oc env ast);
+            Exporter.print_ast oc env ast)
       }
   in
   ignore (Api.Processor.handle_files [ file ] ~hook SttfaCompile);

@@ -5,6 +5,6 @@
  (deps sttfa.dk))
 
 (tests
- (names coq matita pvs hollight opentheory)
+ (names coq matita pvs hollight opentheory lean)
  (libraries sttfaxport)
  (deps sttfa.dk sttfa.dko connectives.dk))
