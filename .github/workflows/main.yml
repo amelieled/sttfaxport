@@ -11,9 +11,10 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
+          - ubuntu-22.04
         ocaml-compiler:
           - 4.08.x
-          - 4.13.x
+          - 4.14.x
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -24,8 +25,16 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - run: opam install . --deps-only --with-test
+      - name: Check formatting
+        run: |
+          opam install ocamlformat
+          opam exec -- dune fmt
 
-      - run: opam exec -- dune build lib/
+      - name: Install dependencies
+        run: opam install . --deps-only --with-test
 
-      - run: opam exec -- dune runtest
+      - name: Build Sttfaxport
+        run: opam exec -- dune build lib/
+
+      - name: Run tests
+        run: opam exec -- dune runtest
