@@ -40,7 +40,7 @@ The following guide shows you how to export a single file to Coq.
    ```ocaml
    # #use "topfind";; (* Not necessary if you're using utop *)
    # #require "sttfaxport";;
-   # Sttfaxport.Systems.(export Coq "connectives.dk")
+   # Sttfaxport.(export Coq "connectives.dk")
    Parameter True : Prop.
    Parameter False : Prop.
    Parameter Not : Prop -> Prop.

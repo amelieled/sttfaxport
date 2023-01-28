@@ -3,17 +3,6 @@
 
 type system = Coq | Matita | Pvs | Lean | Hollight | OpenTheory
 
-(** Signature of an exporter for a system. Supporting a new system amounts to
-    provide an implementation to EXP for the new system. *)
-module type EXP = sig
-  val print_ast : out_channel -> Api.Env.t -> Ast.ast -> unit
-  (** [print_ast oc env ast] prints STTfa [ast] to out channel [oc] in Dedukti
-      environment [env]. It performs side effects or fails. *)
-end
-
-val exporter : system -> (module EXP)
-(** [exporter sys] maps systems to their export module. *)
-
 val export :
   ?path:string list ->
   ?oc:out_channel ->
