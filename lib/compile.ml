@@ -66,7 +66,8 @@ let rec compile_proof dkenv env proof : (_, [> p_error ]) result =
         (a :: args)
   | x -> Error (`CompileProofUnhandled x)
 
-and compile_arg dkenv env j f' a : (_, [> Compile_type.error | p_error]) result =
+and compile_arg dkenv env j f' a : (_, [> Compile_type.error | p_error ]) result
+    =
   let* te = Sttfatyping.subst dkenv env f' a in
   let j' = { j with thm = te } in
   let* j, f' = get_product dkenv env j f' in

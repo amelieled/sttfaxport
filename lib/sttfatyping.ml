@@ -40,7 +40,6 @@ module ComputeStrategy = struct
 
   let beta_only = beta_snf
   let beta_one = { beta_only with nb_steps = Some 1; target = Whnf }
-
   let delta_only cst = delta cst
 end
 
@@ -69,4 +68,3 @@ let subst dkenv env f a =
   let b' = match b' with Term.App (_, a, []) -> a | _ -> assert false in
   let b' = Api.Env.unsafe_reduction dkenv ~red:ComputeStrategy.beta_one b' in
   Compile_type.compile_term dkenv env b'
-
