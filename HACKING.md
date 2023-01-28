@@ -11,3 +11,11 @@ defined in `lib/systems.mli`), an exporter can be obtained using
 The code has been extracted from
 [logipedia](https://github.com/Deducteam/logipedia).
 
+## How to add an exporter?
+
+If you want to add a new exporter:
+
+1. Write a new module that implements the interface `Sttfaxport.EXP`
+1. Add a new constructor in the type `Sttfaxport.system`
+2. Extend the function `Sttfaxport.exporter` from the new constructor to the
+   new module
