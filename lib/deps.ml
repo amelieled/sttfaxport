@@ -52,21 +52,6 @@ let dep_of_entry (mds : mident list) e =
     (fun qset md -> StrSet.remove (string_of_mident md) qset)
     (dep_of_entry e) mds
 
-let deps_of_entry : mident -> entry -> name list =
- fun mid e ->
-  let id =
-    match e with
-    | Decl (_, id, _, _, _) | Def (_, id, _, _, _, _) -> id
-    | _ -> assert false
-  in
-  let module D = Api.Dep in
-  D.compute_all_deps := true;
-  (* Compute dependencies of items *)
-  D.make mid [ e ];
-  let name = mk_name mid id in
-  try D.(NameSet.elements (get_data name).down)
-  with D.(Dep_error (NameNotFound _)) -> []
-
 let deps_of_md md =
   let files = List.map Api.Files.get_file md in
   let htbl = Api.Processor.handle_files files Api.Processor.Dependencies in
