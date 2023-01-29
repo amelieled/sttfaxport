@@ -72,13 +72,21 @@ let get_dk_var env n =
   let _, x, _ = List.nth env.dk n in
   soi x
 
+(** [take i l] returns the first [i] elements of [l]. *)
 let rec take i l =
   if i = 0 then []
-  else match l with [] -> assert false | x :: l -> x :: take (i - 1) l
+  else
+    match l with
+    | [] -> invalid_arg "Environ.take: list too short"
+    | x :: l -> x :: take (i - 1) l
 
+(** [drop k l] takes drops the [k] first elements of [l]. *)
 let rec drop i l =
   if i = 0 then l
-  else match l with [] -> assert false | _ :: l -> drop (i - 1) l
+  else
+    match l with
+    | [] -> invalid_arg "Environ.drop: list too short"
+    | _ :: l -> drop (i - 1) l
 
 let frees t =
   let rec frees_rec set_var = function
