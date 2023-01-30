@@ -18,3 +18,6 @@ module Result = struct
     let return = Result.ok
   end
 end
+
+(** The type of printers of ['a]. *)
+type 'a printer = Format.formatter -> 'a -> unit

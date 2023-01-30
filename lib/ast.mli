@@ -32,11 +32,7 @@ type te = ForallP of ty_var * te | Te of _te
 type ty_ctx = ty_var list
 type te_ctx = (te_var * _ty) list
 
-module TeSet = Set.Make (struct
-  type t = string * _te
-
-  let compare = compare
-end)
+module TeSet : Set.S with type elt = string * _te
 
 type hyp = TeSet.t
 type judgment = { ty : ty_ctx; te : te_ctx; hyp : hyp; thm : te }
@@ -51,36 +47,20 @@ type ctx =
   | CAbsTy
   | CForallP
 
-let print_ctx fmt = function
-  | CAbs -> Format.fprintf fmt "CAbs"
-  | CAppL -> Format.fprintf fmt "CAppL"
-  | CAppR -> Format.fprintf fmt "CAppR"
-  | CForall -> Format.fprintf fmt "CForall"
-  | CImplL -> Format.fprintf fmt "CImplL"
-  | CImplR -> Format.fprintf fmt "CImplR"
-  | CAbsTy -> Format.fprintf fmt "CAbsTy"
-  | CForallP -> Format.fprintf fmt "CForallP"
-
-let print_ctxs fmt ctxs = B.pp_list "," print_ctx fmt ctxs
+val print_ctx : ctx printer
+val print_ctxs : ctx list printer
 
 type redex = Delta of name * _ty list | Beta of _te
 
-let print_redex oc r =
-  match r with
-  | Delta ((md, id), _tys) -> Format.fprintf oc "%s,%s" md id
-  | Beta _ -> Format.fprintf oc "beta"
+val print_redex : redex printer
 
 type rewrite_seq = (redex * ctx list) list
 type trace = { left : rewrite_seq; right : rewrite_seq }
 
-let print_rewrite_ctx oc (rw, ctxs) =
-  Format.fprintf oc "unfold %a at %a;@." print_redex rw print_ctxs ctxs
+val print_rewrite_ctx : (redex * ctx list) printer
+val print_rewrite_seq : (redex * ctx list) list printer
 
-let print_rewrite_seq oc rws = List.iter (print_rewrite_ctx oc) rws
-
-let print_trace oc trace =
-  Format.fprintf oc "left:@.%a@." print_rewrite_seq trace.left;
-  Format.fprintf oc "right:@.%a@." print_rewrite_seq trace.right
+val print_trace : trace printer
 
 type proof =
   | Assume of judgment * string
@@ -109,30 +89,8 @@ type kind =
 type ast = { md : string; dep : StrSet.t; items : item list }
 type mdeps = (string * StrSet.t) list
 
-let kind_of = function
-  | Parameter _ -> `Parameter
-  | Definition _ -> `Definition
-  | Axiom _ -> `Axiom
-  | Theorem _ -> `Theorem
-  | TypeDecl _ -> `TypeDecl
-  | TypeDef _ -> `TypeDef
+val kind_of : item -> kind
 
-let name_of = function
-  | Parameter (name, _)
-  | Definition (name, _, _)
-  | Axiom (name, _)
-  | Theorem (name, _, _)
-  | TypeDecl (name, _)
-  | TypeDef (name, _, _) ->
-      name
+val name_of : item -> name
 
-let judgment_of = function
-  | Assume (j, _) -> j
-  | Lemma (_, j) -> j
-  | Conv (j, _, _) -> j
-  | ImplE (j, _, _) -> j
-  | ImplI (j, _, _) -> j
-  | ForallE (j, _, _) -> j
-  | ForallI (j, _, _) -> j
-  | ForallPE (j, _, _) -> j
-  | ForallPI (j, _, _) -> j
+val judgment_of : proof -> judgment
