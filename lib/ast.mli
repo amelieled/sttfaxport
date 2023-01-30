@@ -118,7 +118,6 @@ type kind =
   [ `Parameter | `Definition | `Axiom | `Theorem | `TypeDecl | `TypeDef ]
 
 type ast = { md : string; dep : StrSet.t; items : item list }
-type mdeps = (string * StrSet.t) list
 
 val kind_of : item -> kind
 val name_of : item -> name
