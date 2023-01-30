@@ -66,8 +66,7 @@ type te_ctx = (vterm variable * _ty) list
 
 module TeSet : Set.S with type elt = string * _te
 
-type hyp = TeSet.t
-type judgment = { ty : ty_ctx; te : te_ctx; hyp : hyp; thm : te }
+type judgment = { ty : ty_ctx; te : te_ctx; hyp : TeSet.t; thm : te }
 
 type ctx =
   | CAbs

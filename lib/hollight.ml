@@ -194,11 +194,7 @@ let rec mk_proof dkenv env = function
       match (judgment_of proof).thm with
       | Te (Forall (_, _ty, _te)) ->
           let frees_u = frees u in
-          (* let () = Vars.iter (fun x -> Printf.printf "%s; " x) frees_u in*)
-          (* let () = Printf.printf "\n" in*)
-          (*let frees_ty = frees_ty _ty in*)
           let u' = mk__te dkenv env [] u in
-          (*(Vars.exists (fun tyvar -> not (is_in_var tyvar u')) frees_ty)*)
           let u'' =
             if issue_tyvar u' _ty then mk__te dkenv env [] ~total:true u else u'
           in
