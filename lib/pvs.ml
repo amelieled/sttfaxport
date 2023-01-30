@@ -144,22 +144,7 @@ let rec print_te_pvs : string -> F.formatter -> A.te -> unit =
   | ForallP (_, te') -> print_te_pvs pvs_md oc te'
   | Te te' -> print__te_pvs pvs_md oc te'
 
-let conclusion_pvs : A.proof -> A.te =
- fun prf ->
-  let j =
-    match prf with
-    | Assume (j, _)
-    | Lemma (_, j)
-    | Conv (j, _, _)
-    | ImplE (j, _, _)
-    | ImplI (j, _, _)
-    | ForallE (j, _, _)
-    | ForallI (j, _, _)
-    | ForallPE (j, _, _)
-    | ForallPI (j, _, _) ->
-        j
-  in
-  j.thm
+let conclusion_pvs : A.proof -> A.te = fun prf -> (Ast.judgment_of prf).thm
 
 exception Error
 
