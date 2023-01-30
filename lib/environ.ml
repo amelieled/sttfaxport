@@ -19,13 +19,15 @@ type env = {
 let empty_env = { k = 0; dk = []; ty = []; te = []; prf = [] }
 let soi = string_of_ident
 
-let rec gen_fresh_rec ctx avoid x c =
+let rec gen_fresh_rec ctx (avoid : StrSet.t) x c =
   let x' = if c < 0 then x else x ^ string_of_int c in
-  if List.exists (fun (_, v, _) -> soi v = x') ctx || List.mem x' avoid then
+  if List.exists (fun (_, v, _) -> soi v = x') ctx || StrSet.mem x' avoid then
     gen_fresh_rec ctx avoid x (c + 1)
   else mk_ident x'
 
-let gen_fresh env avoid x = gen_fresh_rec env.dk avoid (soi x) (-1)
+let gen_fresh env ?(avoid = StrSet.empty) x =
+  gen_fresh_rec env.dk avoid (soi x) (-1)
+
 let mk_ident = mk_ident
 let string_of_ident = string_of_ident
 let of_name name = (string_of_mident (md name), string_of_ident (id name))
@@ -33,7 +35,7 @@ let of_name name = (string_of_mident (md name), string_of_ident (id name))
 let name_of cst =
   Basic.mk_name (Basic.mk_mident (fst cst)) (Basic.mk_ident (snd cst))
 
-let add_ty_var env var =
+let add_ty_var env (var : vtype variable) =
   let open Basic in
   let open Sttfadk in
   {
@@ -41,13 +43,15 @@ let add_ty_var env var =
     k = env.k + 1;
     ty = var :: env.ty;
     dk =
-      (dloc, mk_ident var, Term.mk_Const dloc (mk_name sttfa_module sttfa_type))
+      ( dloc,
+        mk_ident (string_of_var var),
+        Term.mk_Const dloc (mk_name sttfa_module sttfa_type) )
       :: env.dk;
   }
 
-let add_ty_var_dk env var = add_ty_var env (soi var)
+let add_ty_var_dk env var = add_ty_var env (type_var var)
 
-let add_te_var env var ty' =
+let add_te_var env (var : vterm variable) ty' =
   let open Basic in
   let ty = Decompile.decompile__type env.dk ty' in
   let ty = Decompile.to__type ty in
@@ -55,10 +59,10 @@ let add_te_var env var ty' =
     env with
     k = env.k + 1;
     te = (var, ty') :: env.te;
-    dk = (dloc, mk_ident var, ty) :: env.dk;
+    dk = (dloc, mk_ident (string_of_var var), ty) :: env.dk;
   }
 
-let add_te_var_dk env var ty' = add_te_var env (soi var) ty'
+let add_te_var_dk env var ty' = add_te_var env (term_var var) ty'
 
 let add_prf_ctx env id _te _te' =
   {
@@ -70,7 +74,7 @@ let add_prf_ctx env id _te _te' =
 
 let get_dk_var env n =
   let _, x, _ = List.nth env.dk n in
-  soi x
+  x
 
 (** [take i l] returns the first [i] elements of [l]. *)
 let rec take i l =
@@ -89,38 +93,36 @@ let rec drop i l =
     | _ :: l -> drop (i - 1) l
 
 let frees t =
-  let rec frees_rec set_var = function
-    | TeVar s -> StrSet.add s set_var
+  let rec frees_rec (set_var : vterm VarSet.t) = function
+    | TeVar s -> VarSet.add s set_var
     | Abs (v, _, t) ->
         let set_vars_t = frees_rec set_var t in
-        StrSet.union set_var (StrSet.remove v set_vars_t)
-    | App (t1, t2) -> StrSet.union (frees_rec set_var t1) (frees_rec set_var t2)
+        VarSet.(union set_var (remove v set_vars_t))
+    | App (t1, t2) -> VarSet.union (frees_rec set_var t1) (frees_rec set_var t2)
     | Forall (v, _, t) ->
         let set_vars_t = frees_rec set_var t in
-        StrSet.union set_var (StrSet.remove v set_vars_t)
+        VarSet.(union set_var (remove v set_vars_t))
     | Impl (t1, t2) ->
-        StrSet.union (frees_rec set_var t1) (frees_rec set_var t2)
+        VarSet.union (frees_rec set_var t1) (frees_rec set_var t2)
     | AbsTy (_, t) -> frees_rec set_var t
     | Cst _ -> set_var
   in
-  frees_rec StrSet.empty t
+  frees_rec VarSet.empty t
 
 let frees_ty ty =
   let rec frees_ty_rec set_var = function
-    | TyVar s -> StrSet.add s set_var
+    | TyVar s -> VarSet.add s set_var
     | Arrow (tyl, tyr) ->
-        StrSet.union (frees_ty_rec set_var tyl) (frees_ty_rec set_var tyr)
+        VarSet.union (frees_ty_rec set_var tyl) (frees_ty_rec set_var tyr)
     | TyOp (_, tys) ->
         let list_var_tys = List.map (frees_ty_rec set_var) tys in
         let set_vars_tys =
-          List.fold_left
-            (fun s1 s2 -> StrSet.union s1 s2)
-            StrSet.empty list_var_tys
+          List.fold_left VarSet.union VarSet.empty list_var_tys
         in
         set_vars_tys
-    | Prop -> StrSet.empty
+    | Prop -> VarSet.empty
   in
-  frees_ty_rec StrSet.empty ty
+  frees_ty_rec VarSet.empty ty
 
 (*let deep_alpha varlist t set_var =
     let rename_list = List.map (fun v -> (v,gen_fresh_set set_var v)) varlist in

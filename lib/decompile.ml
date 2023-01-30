@@ -16,7 +16,9 @@ let rec find name (ctx : typed_context) i =
   | (_, x, _) :: t -> if mk_ident name = x then i else find name t (i + 1)
 
 let find name ctx = find name ctx 0
-let add_ty_var ty_var ctx = (dloc, mk_ident ty_var, to_const sttfa_type) :: ctx
+
+let add_ty_var ty_var ctx =
+  (dloc, mk_ident (string_of_var ty_var), to_const sttfa_type) :: ctx
 
 let rec decompile__type ctx _ty =
   match _ty with
@@ -24,7 +26,8 @@ let rec decompile__type ctx _ty =
   | Arrow (_tyl, _tyr) ->
       Term.mk_App (to_const sttfa_arrow) (decompile__type ctx _tyl)
         [ decompile__type ctx _tyr ]
-  | TyVar string -> Term.mk_DB dloc (mk_ident string) (find string ctx)
+  | TyVar v ->
+      Term.mk_DB dloc (mk_ident (string_of_var v)) (find (string_of_var v) ctx)
   | TyOp (tyop, []) -> Term.mk_Const dloc (to_name tyop)
   | TyOp (tyop, _ty :: _args) ->
       Term.mk_App
@@ -39,22 +42,29 @@ let rec decompile_type ctx ty =
       let ty' = decompile_type (add_ty_var ty_var ctx) ty in
       Term.mk_App
         (to_const sttfa_forall_kind_type)
-        (Term.mk_Lam dloc (mk_ident ty_var) (Some (to_const sttfa_type)) ty')
+        (Term.mk_Lam dloc
+           (mk_ident (string_of_var ty_var))
+           (Some (to_const sttfa_type))
+           ty')
         []
 
 let to__type _ty =
   Term.mk_App (to_const sttfa_etap) (Term.mk_App (to_const sttfa_p) _ty []) []
 
-let add_te_var te_var _ty ctx = (dloc, mk_ident te_var, to__type _ty) :: ctx
+let add_te_var te_var _ty ctx =
+  (dloc, mk_ident (string_of_var te_var), to__type _ty) :: ctx
 
 (* ASSUMPTION: the set of ty_var and te_var are disjoint *)
 let rec decompile__term ctx _te =
   match _te with
-  | TeVar x -> Term.mk_DB dloc (mk_ident x) (find x ctx)
+  | TeVar x ->
+      let x = string_of_var x in
+      Term.mk_DB dloc (mk_ident x) (find x ctx)
   | Abs (x, _ty, _te) ->
       let _ty' = decompile__type ctx _ty in
       let ctx' = add_te_var x _ty' ctx in
-      Term.mk_Lam dloc (mk_ident x)
+      Term.mk_Lam dloc
+        (mk_ident (string_of_var x))
         (Some (to__type _ty'))
         (decompile__term ctx' _te)
   | App (tel, ter) ->
@@ -64,14 +74,20 @@ let rec decompile__term ctx _te =
       let ctx' = add_te_var te_var _ty' ctx in
       let _te' = decompile__term ctx' _te in
       Term.mk_App (to_const sttfa_forall) _ty'
-        [ Term.mk_Lam dloc (mk_ident te_var) (Some (to__type _ty')) _te' ]
+        [
+          Term.mk_Lam dloc
+            (mk_ident (string_of_var te_var))
+            (Some (to__type _ty'))
+            _te';
+        ]
   | Impl (_tel, _ter) ->
       let _tel' = decompile__term ctx _tel in
       let _ter' = decompile__term ctx _ter in
       Term.mk_App (to_const sttfa_impl) _tel' [ _ter' ]
   | AbsTy (ty_var, _te) ->
       let ctx' = add_ty_var ty_var ctx in
-      Term.mk_Lam dloc (mk_ident ty_var)
+      Term.mk_Lam dloc
+        (mk_ident (string_of_var ty_var))
         (Some (to_const sttfa_type))
         (decompile__term ctx' _te)
   | Cst (cst, args) ->
@@ -86,15 +102,23 @@ let rec decompile_term ctx te =
       let te' = decompile_term ctx' te in
       Term.mk_App
         (to_const sttfa_forall_kind_prop)
-        (Term.mk_Lam dloc (mk_ident ty_var) (Some (to_const sttfa_type)) te')
+        (Term.mk_Lam dloc
+           (mk_ident (string_of_var ty_var))
+           (Some (to_const sttfa_type))
+           te')
         []
 
 let to_eps t = Term.mk_App (to_const sttfa_eps) t []
-let add_prf_ctx ctx id _te = (Basic.dloc, mk_ident id, _te) :: ctx
+
+let add_prf_ctx ctx id _te =
+  (Basic.dloc, mk_ident (string_of_var id), _te) :: ctx
 
 let rec decompile_proof ctx prf =
   match prf with
-  | Assume (_, var) -> Term.mk_DB dloc (mk_ident var) (find var ctx)
+  | Assume (_, var) ->
+      Term.mk_DB dloc
+        (mk_ident (string_of_var var))
+        (find (string_of_var var) ctx)
   | Lemma (cst, _) -> Term.mk_Const dloc (to_name cst)
   | Conv (_, prf, _) -> decompile_proof ctx prf
   | ImplE (_, left, right) ->
@@ -102,29 +126,35 @@ let rec decompile_proof ctx prf =
   | ImplI (_, proof, var) ->
       let j' = judgment_of proof in
       let _, _te =
-        TeSet.choose
-          (TeSet.filter (fun (x, _) -> if x = var then true else false) j'.hyp)
+        TeSet.choose (TeSet.filter (fun (x, _) -> x = string_of_var var) j'.hyp)
       in
       let _te' = decompile__term ctx _te in
       let ctx' = add_prf_ctx ctx var _te' in
       let proof' = decompile_proof ctx' proof in
-      Term.mk_Lam dloc (mk_ident var) (Some (to_eps _te')) proof'
+      Term.mk_Lam dloc
+        (mk_ident (string_of_var var))
+        (Some (to_eps _te'))
+        proof'
   | ForallE (_, left, _te) ->
       let _te' = decompile__term ctx _te in
       Term.mk_App (decompile_proof ctx left) _te' []
   | ForallI (_, proof, var) ->
       let j' = judgment_of proof in
-      let _, _ty =
-        List.find (fun (x, _) -> x = var) j'.te
-      in
+      let _, _ty = List.find (fun (x, _) -> x = var) j'.te in
       let _ty' = decompile__type ctx _ty in
       let ctx' = add_te_var var _ty' ctx in
       let proof' = decompile_proof ctx' proof in
-      Term.mk_Lam dloc (mk_ident var) (Some (to__type _ty')) proof'
+      Term.mk_Lam dloc
+        (mk_ident (string_of_var var))
+        (Some (to__type _ty'))
+        proof'
   | ForallPE (_, left, _ty) ->
       let _ty' = decompile__type ctx _ty in
       Term.mk_App (decompile_proof ctx left) _ty' []
   | ForallPI (_, proof, var) ->
       let ctx' = add_ty_var var ctx in
       let proof' = decompile_proof ctx' proof in
-      Term.mk_Lam dloc (mk_ident var) (Some (to_const sttfa_type)) proof'
+      Term.mk_Lam dloc
+        (mk_ident (string_of_var var))
+        (Some (to_const sttfa_type))
+        proof'

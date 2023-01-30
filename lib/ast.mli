@@ -7,30 +7,62 @@ module B = Kernel.Basic
 (** {b NOTE} underscored types are monomorphic, not underscored are
     polymorphic. *)
 
-type ty_var = string
-type te_var = string
+(** {1 Variables} *)
+
+type _ variable
+(** The type of variables. *)
+
+type vtype
+type vterm
+type vhypothesis
+
+val string_of_var : _ variable -> string
+
+val sov : _ variable -> string
+(** [sov v] returns a string made from variable [v]. *)
+
+module type VARSET = sig
+  type _ t
+  (** A set of variables *)
+
+  val empty : _ t
+  val add : 'a variable -> 'a t -> 'a t
+  val remove : 'a variable -> 'a t -> 'a t
+  val union : 'a t -> 'a t -> 'a t
+  val exists : ('a variable -> bool) -> 'a t -> bool
+  val fold : ('a variable -> 'b -> 'b) -> 'a t -> 'b -> 'b
+end
+
+module VarSet : VARSET
+
+(** {2 Constructors for variables} *)
+
+val type_var : B.ident -> vtype variable
+val term_var : B.ident -> vterm variable
+val hypothesis_var : B.ident -> vhypothesis variable
+
 type name = string * string
 
 type _ty =
-  | TyVar of ty_var
+  | TyVar of vtype variable
   | Arrow of _ty * _ty
   | TyOp of name * _ty list
   | Prop
 
-type ty = ForallK of ty_var * ty | Ty of _ty
+type ty = ForallK of vtype variable * ty | Ty of _ty
 
 type _te =
-  | TeVar of te_var
-  | Abs of te_var * _ty * _te
+  | TeVar of vterm variable
+  | Abs of vterm variable * _ty * _te
   | App of _te * _te
-  | Forall of te_var * _ty * _te
+  | Forall of vterm variable * _ty * _te
   | Impl of _te * _te
-  | AbsTy of ty_var * _te
+  | AbsTy of vtype variable * _te
   | Cst of name * _ty list
 
-type te = ForallP of ty_var * te | Te of _te
-type ty_ctx = ty_var list
-type te_ctx = (te_var * _ty) list
+type te = ForallP of vtype variable * te | Te of _te
+type ty_ctx = vtype variable list
+type te_ctx = (vterm variable * _ty) list
 
 module TeSet : Set.S with type elt = string * _te
 
@@ -59,19 +91,18 @@ type trace = { left : rewrite_seq; right : rewrite_seq }
 
 val print_rewrite_ctx : (redex * ctx list) printer
 val print_rewrite_seq : (redex * ctx list) list printer
-
 val print_trace : trace printer
 
 type proof =
-  | Assume of judgment * string
+  | Assume of judgment * vhypothesis variable
   | Lemma of name * judgment
   | Conv of judgment * proof * trace
   | ImplE of judgment * proof * proof
-  | ImplI of judgment * proof * string
+  | ImplI of judgment * proof * vhypothesis variable
   | ForallE of judgment * proof * _te
-  | ForallI of judgment * proof * te_var
+  | ForallI of judgment * proof * vterm variable
   | ForallPE of judgment * proof * _ty
-  | ForallPI of judgment * proof * ty_var
+  | ForallPI of judgment * proof * vtype variable
 
 type arity = int
 
@@ -81,7 +112,7 @@ type item =
   | Axiom of name * te
   | Theorem of name * te * proof
   | TypeDecl of name * arity
-  | TypeDef of name * ty_var list * _ty
+  | TypeDef of name * vtype variable list * _ty
 
 type kind =
   [ `Parameter | `Definition | `Axiom | `Theorem | `TypeDecl | `TypeDef ]
@@ -90,7 +121,5 @@ type ast = { md : string; dep : StrSet.t; items : item list }
 type mdeps = (string * StrSet.t) list
 
 val kind_of : item -> kind
-
 val name_of : item -> name
-
 val judgment_of : proof -> judgment

@@ -7,30 +7,65 @@ module B = Kernel.Basic
 (** {b NOTE} underscored types are monomorphic, not underscored are
     polymorphic. *)
 
-type ty_var = string
-type te_var = string
+type vtype
+type vterm
+type vhypothesis
+type _ variable = V of string
+
+let string_of_var (V x : _ variable) : string = x
+let sov (V x : _ variable) : string = x
+
+module type VARSET = sig
+  type _ t
+
+  val empty : _ t
+  val add : 'a variable -> 'a t -> 'a t
+  val remove : 'a variable -> 'a t -> 'a t
+  val union : 'a t -> 'a t -> 'a t
+  val exists : ('a variable -> bool) -> 'a t -> bool
+  val fold : ('a variable -> 'b -> 'b) -> 'a t -> 'b -> 'b
+end
+
+module VarSet : VARSET = struct
+  module VSet = Set.Make (String)
+
+  type _ t = VSet.t
+
+  let empty : type a. a t = VSet.empty
+  let add (V x : 'a variable) (set : 'a t) : 'a t = VSet.add x set
+  let remove (V x : 'a variable) (set : 'a t) : 'a t = VSet.remove x set
+  let union = VSet.union
+  let exists f = VSet.exists (fun x -> f (V x))
+  let fold f = VSet.fold (fun x -> f (V x))
+end
+
+let voi (type a) i : a variable = V (B.string_of_ident i)
+let type_var : B.ident -> vtype variable = voi
+let term_var : B.ident -> vterm variable = voi
+let hypothesis_var : B.ident -> vhypothesis variable = voi
+
 type name = string * string
 
 type _ty =
-  | TyVar of ty_var
+  | TyVar of vtype variable
   | Arrow of _ty * _ty
   | TyOp of name * _ty list
   | Prop
 
-type ty = ForallK of ty_var * ty | Ty of _ty
+type ty = ForallK of vtype variable * ty | Ty of _ty
 
 type _te =
-  | TeVar of te_var
-  | Abs of te_var * _ty * _te
+  | TeVar of vterm variable
+  | Abs of vterm variable * _ty * _te
   | App of _te * _te
-  | Forall of te_var * _ty * _te
+  | Forall of vterm variable * _ty * _te
   | Impl of _te * _te
-  | AbsTy of ty_var * _te
+  | AbsTy of vtype variable * _te
   | Cst of name * _ty list
 
-type te = ForallP of ty_var * te | Te of _te
-type ty_ctx = ty_var list
-type te_ctx = (te_var * _ty) list
+type te = ForallP of vtype variable * te | Te of _te
+type ty_ctx = vtype variable list
+type te_ctx = (vterm variable * _ty) list
 
 module TeSet = Set.Make (struct
   type t = string * _te
@@ -83,15 +118,15 @@ let print_trace oc trace =
   Format.fprintf oc "right:@.%a@." print_rewrite_seq trace.right
 
 type proof =
-  | Assume of judgment * string
+  | Assume of judgment * vhypothesis variable
   | Lemma of name * judgment
   | Conv of judgment * proof * trace
   | ImplE of judgment * proof * proof
-  | ImplI of judgment * proof * string
+  | ImplI of judgment * proof * vhypothesis variable
   | ForallE of judgment * proof * _te
-  | ForallI of judgment * proof * te_var
+  | ForallI of judgment * proof * vterm variable
   | ForallPE of judgment * proof * _ty
-  | ForallPI of judgment * proof * ty_var
+  | ForallPI of judgment * proof * vtype variable
 
 type arity = int
 
@@ -101,7 +136,7 @@ type item =
   | Axiom of name * te
   | Theorem of name * te * proof
   | TypeDecl of name * arity
-  | TypeDef of name * ty_var list * _ty
+  | TypeDef of name * vtype variable list * _ty
 
 type kind =
   [ `Parameter | `Definition | `Axiom | `Theorem | `TypeDecl | `TypeDef ]

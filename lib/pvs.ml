@@ -36,7 +36,7 @@ let print_qualified_name : string -> F.formatter -> A.name -> unit =
 let print__ty_pvs : string -> F.formatter -> A._ty -> unit =
   let rec print is_atom modul oc _ty =
     match _ty with
-    | A.TyVar x -> F.fprintf oc "%s" x
+    | A.TyVar x -> F.fprintf oc "%s" (Ast.sov x)
     | Arrow (_, _) when is_atom -> F.fprintf oc "%a" (print false modul) _ty
     | Arrow (a, b) ->
         F.fprintf oc "[%a -> %a]" (print true modul) a (print false modul) b
@@ -53,7 +53,9 @@ let rec print_ty_pvs : string -> F.formatter -> A.ty -> unit =
 
 let rec prefix_of_ty : A.ty -> string list =
  fun ty ->
-  match ty with ForallK (x, ty') -> x :: prefix_of_ty ty' | Ty _ -> []
+  match ty with
+  | ForallK (x, ty') -> A.string_of_var x :: prefix_of_ty ty'
+  | Ty _ -> []
 
 let print_type_list_pvs : F.formatter -> string -> A._ty list -> unit =
  fun oc pvs_md l ->
@@ -86,15 +88,17 @@ let print__te_pvs : string -> F.formatter -> A._te -> unit =
   let rec print stack pvs_md oc t =
     match t with
     | A.TeVar x ->
-        F.fprintf oc "%s" (sanitize_name_pvs x);
+        F.fprintf oc "%s" (sanitize_name_pvs (A.string_of_var x));
         print_stack oc pvs_md stack
     | Abs (x, a, t) ->
-        F.fprintf oc "(LAMBDA(%s:%a):%a)" (sanitize_name_pvs x)
+        F.fprintf oc "(LAMBDA(%s:%a):%a)"
+          (sanitize_name_pvs (A.string_of_var x))
           (print__ty_pvs pvs_md) a (print [] pvs_md) t;
         print_stack oc pvs_md stack
     | App (t, u) -> print (u :: stack) pvs_md oc t
     | Forall (x, a, t) ->
-        F.fprintf oc "(FORALL(%s:%a):%a)" (sanitize_name_pvs x)
+        F.fprintf oc "(FORALL(%s:%a):%a)"
+          (sanitize_name_pvs (A.string_of_var x))
           (print__ty_pvs pvs_md) a (print [] pvs_md) t;
         print_stack oc pvs_md stack
     | Impl (t, u) ->
@@ -123,7 +127,9 @@ let print__te_pvs : string -> F.formatter -> A._te -> unit =
 
 let rec prefix_of_te : A.te -> string list =
  fun te ->
-  match te with ForallP (x, te') -> x :: prefix_of_te te' | Te _ -> []
+  match te with
+  | ForallP (x, te') -> A.string_of_var x :: prefix_of_te te'
+  | Te _ -> []
 
 let print_prenex_te_pvs : string -> F.formatter -> A.te -> unit =
  fun _ oc te ->
@@ -204,7 +210,8 @@ let print_proof_pvs : string -> F.formatter -> A.proof -> unit =
           p
     | ForallI (_, p, n) ->
         F.fprintf oc "%%|- (then%@ (sttfa-forall-i \"%s\")\n%a)"
-          (sanitize_name_pvs n) (print acc pvs_md) p
+          (sanitize_name_pvs (A.string_of_var n))
+          (print acc pvs_md) p
     | ForallPE (_, p, _ty) -> print (_ty :: acc) pvs_md oc p
     | ForallPI (_, p, _) -> print acc pvs_md oc p
   in

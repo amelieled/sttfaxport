@@ -16,9 +16,7 @@ let rec compile__type env _ty =
       let left' = compile__type env left in
       let right' = compile__type env right in
       Arrow (left', right')
-  | Term.DB (_, _, n) ->
-      let var = get_dk_var env n in
-      TyVar var
+  | Term.DB (_, _, n) -> TyVar (type_var (get_dk_var env n))
   | Term.App (tyop, a, args) ->
       let tyop' = compile_tyop tyop in
       let args' = List.map (fun x -> compile__type env x) (a :: args) in
@@ -38,9 +36,9 @@ let rec compile_type (dkenv : Api.Env.t) (env : env) ty =
   match ty with
   | Term.App (c, Term.Lam (_, var, _, ty), [])
     when is_sttfa_const sttfa_forall_kind_type c ->
-      let var = gen_fresh env [] var in
+      let var = gen_fresh env var in
       let ty' = compile_type dkenv (add_ty_var_dk env var) ty in
-      ForallK (soi var, ty')
+      ForallK (type_var var, ty')
   | Term.App (c, a, []) when is_sttfa_const sttfa_p c ->
       Ty (compile__type dkenv env a)
   | _ -> assert false
@@ -87,24 +85,22 @@ let get_type_arity dkenv env lc name =
 
 let rec compile__term dkenv env _te : (_te, [> error ]) result =
   match _te with
-  | Term.DB (_, _, n) ->
-      let var = get_dk_var env n in
-      return (TeVar var)
+  | Term.DB (_, _, n) -> return (TeVar (term_var (get_dk_var env n)))
   | Term.Lam (_, id, Some cst, _te) when is_sttfa_const sttfa_type cst ->
-      let id = gen_fresh env [] id in
+      let id = gen_fresh env id in
       let* _te' = compile__term dkenv (add_ty_var_dk env id) _te in
-      return (AbsTy (soi id, _te'))
+      return (AbsTy (type_var id, _te'))
   | Term.Lam (_, id, Some _ty, _te) ->
-      let id = gen_fresh env [] id in
+      let id = gen_fresh env id in
       let _ty' = compile_wrapped__type dkenv env _ty in
       let* _te' = compile__term dkenv (add_te_var_dk env id _ty') _te in
-      return (Abs (soi id, _ty', _te'))
+      return (Abs (term_var id, _ty', _te'))
   | Term.App (cst, _ty, [ Term.Lam (_, id, Some _, _te) ])
     when is_sttfa_const sttfa_forall cst ->
-      let id = gen_fresh env [] id in
+      let id = gen_fresh env id in
       let _ty' = compile__type dkenv env _ty in
       let* _te' = compile__term dkenv (add_te_var_dk env id _ty') _te in
-      return (Forall (soi id, _ty', _te'))
+      return (Forall (term_var id, _ty', _te'))
   | Term.App (cst, tel, [ ter ]) when is_sttfa_const sttfa_impl cst ->
       let* tel' = compile__term dkenv env tel in
       let* ter' = compile__term dkenv env ter in
@@ -149,9 +145,9 @@ let rec compile_term dkenv env te : (te, [> error ]) result =
   match te with
   | Term.App (cst, Term.Lam (_, x, Some _, te), [])
     when is_sttfa_const sttfa_forall_kind_prop cst ->
-      let x = gen_fresh env [] x in
+      let x = gen_fresh env x in
       let* te' = compile_term dkenv (add_ty_var_dk env x) te in
-      return (ForallP (soi x, te'))
+      return (ForallP (type_var x, te'))
   | _ ->
       let* te = compile__term dkenv env te in
       return (Te te)

@@ -11,7 +11,7 @@ let sanitize id =
   in
   if id = "return" then id ^ "_" else id
 
-let print_var oc id = Format.fprintf oc "%s" (sanitize id)
+let print_var oc id = Format.fprintf oc "%s" (sanitize (string_of_var id))
 
 let rec print_list sep pp oc = function
   | [] -> Format.fprintf oc ""
@@ -89,8 +89,7 @@ let rec print_proof oc = function
   | ImplI (_, proof, var) ->
       let j' = judgment_of proof in
       let _, _te =
-        TeSet.choose
-          (TeSet.filter (fun (x, _) -> if x = var then true else false) j'.hyp)
+        TeSet.choose (TeSet.filter (fun (x, _) -> x = string_of_var var) j'.hyp)
       in
       Format.fprintf oc "fun (%a:%a) => (%a)" print_var var print__te _te
         print_proof proof

@@ -20,4 +20,4 @@ val compile_wrapped_term :
   Api.Env.t -> Environ.env -> Term.term -> (Ast.te, [> error ]) result
 
 val compile_type_definition :
-  Api.Env.t -> Environ.env -> Term.term -> Ast.ty_var list * Ast._ty
+  Api.Env.t -> Environ.env -> Term.term -> Ast.vtype Ast.variable list * Ast._ty

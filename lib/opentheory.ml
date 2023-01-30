@@ -14,7 +14,7 @@ let mk_id id = mk_name [] (sanitize id)
 let mk_qid (md, id) = mk_name [ md ] id
 
 let rec mk__ty = function
-  | TyVar var -> mk_varType (mk_id var)
+  | TyVar var -> mk_varType (mk_id @@ sov var)
   | Arrow (_tyl, _tyr) ->
       let _tys' = List.map mk__ty [ _tyl; _tyr ] in
       ty_of_tyOp (mk_tyOp (mk_id "->")) _tys'
@@ -46,11 +46,11 @@ let rec mk__te dkenv ctx = function
   | TeVar var ->
       let _ty = List.assoc var ctx.te in
       let _ty' = mk__ty _ty in
-      mk_var_term (mk_var (mk_id var) _ty')
+      mk_var_term (mk_var (mk_id @@ sov var) _ty')
   | Abs (var, _ty, _te) ->
       let ctx' = add_te_var ctx var _ty in
       let _ty' = mk__ty _ty in
-      let var' = mk_var (mk_id var) _ty' in
+      let var' = mk_var (mk_id @@ sov var) _ty' in
       let _te' = mk__te dkenv ctx' _te in
       mk_abs_term var' _te'
   | App (_tel, _ter) ->
@@ -147,7 +147,7 @@ let mk_rewrite dkenv ctx r =
       let ty' = Compile_type.compile_type dkenv ctx ty in
       let vars = get_vars ty' in
       assert (List.length vars = List.length _tys);
-      let vars' = List.map mk_id vars in
+      let vars' = List.map (fun x -> mk_id (sov x)) vars in
       let _tys' = List.map mk__ty _tys in
       let* thm = thm_of_const dkenv (md, id) in
       return @@ mk_subst thm (List.combine vars' _tys') []
@@ -165,7 +165,7 @@ let mk_delta dkenv ctx cst _tys =
   let ty = Api.Env.infer dkenv ~ctx:[] term in
   let ty' = Compile_type.compile_wrapped_type dkenv ctx ty in
   let vars = get_vars ty' in
-  let vars' = List.map mk_id vars in
+  let vars' = List.map (fun x -> mk_id (sov x)) vars in
   let _tys' = List.map mk__ty _tys in
   assert (List.length vars = List.length _tys);
   let subst = List.combine vars' _tys' in
@@ -180,7 +180,7 @@ let rec mk__ctx dkenv env thm ctx left right =
       assert (var = var');
       assert (_ty = _ty');
       let env' = add_te_var env var _ty in
-      let var = mk_var (mk_id var) (mk__ty _ty) in
+      let var = mk_var (mk_id @@ sov var) (mk__ty _ty) in
       let thm = mk__ctx dkenv env' thm ctx _te _te' in
       mk_absThm var thm
   | CForall :: ctx, Forall (var, _ty, _tel), Forall (var', _ty', _ter) ->
@@ -190,7 +190,7 @@ let rec mk__ctx dkenv env thm ctx left right =
       let _tel' = mk__te dkenv env' _tel in
       let _ter' = mk__te dkenv env' _ter in
       let thm = mk__ctx dkenv env' thm ctx _tel _ter in
-      mk_forall_equal thm (mk_id var) _tel' _ter' (mk__ty _ty)
+      mk_forall_equal thm (mk_id @@ sov var) _tel' _ter' (mk__ty _ty)
   | CAppL :: ctx, App (_tel, _ter), App (_tel', _ter') ->
       let thm = mk__ctx dkenv env thm ctx _tel _tel' in
       mk_appThm thm (mk_refl (mk__te dkenv env _ter))
@@ -280,7 +280,7 @@ let rec mk_proof dkenv env =
       let* proof' = mk_proof dkenv env' proof in
       let _ty' = mk__ty _ty in
       let thm' = mk_te dkenv env' j'.thm in
-      return @@ mk_rule_intro_forall (mk_id var) _ty' thm' proof'
+      return @@ mk_rule_intro_forall (mk_id @@ sov var) _ty' thm' proof'
   | ImplE (j, prfpq, prfp) ->
       let p = (judgment_of prfp).thm in
       let q = j.thm in
@@ -292,13 +292,12 @@ let rec mk_proof dkenv env =
   | ImplI (_, proof, var) ->
       let j' = judgment_of proof in
       let _, p =
-        TeSet.choose
-          (TeSet.filter
-             (fun (x, _ty) -> if x = var then true else false)
-             j'.hyp)
+        TeSet.choose (TeSet.filter (fun (x, _ty) -> x = sov var) j'.hyp)
       in
       let q = j'.thm in
-      let env' = add_prf_ctx env var (Decompile.decompile__term env.dk p) p in
+      let env' =
+        add_prf_ctx env (sov var) (Decompile.decompile__term env.dk p) p
+      in
       let p' = mk__te dkenv env p in
       let q' = mk_te dkenv env q in
       let* proof' = mk_proof dkenv env' proof in
@@ -306,7 +305,7 @@ let rec mk_proof dkenv env =
   | ForallPE (_, proof, _ty) -> (
       match (judgment_of proof).thm with
       | ForallP (var, _) ->
-          let subst = [ (mk_id var, mk__ty _ty) ] in
+          let subst = [ (mk_id @@ sov var, mk__ty _ty) ] in
           let* proof' = mk_proof dkenv env proof in
           return @@ mk_subst proof' subst []
       | _ -> assert false)

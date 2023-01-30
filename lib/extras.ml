@@ -19,5 +19,5 @@ module Result = struct
   end
 end
 
-(** The type of printers of ['a]. *)
 type 'a printer = Format.formatter -> 'a -> unit
+(** The type of printers of ['a]. *)

@@ -19,23 +19,24 @@ let rec compile_proof dkenv env proof : (_, [> p_error ]) result =
   match proof with
   | Term.DB (_, _, n) ->
       let var = get_dk_var env n in
-      let te' = List.assoc var env.prf in
+      let te' = List.assoc (soi var) env.prf in
       let j = make_judgment env (TeSet.of_list env.prf) (Te te') in
-      return (j, Assume (j, var))
+      return (j, Assume (j, hypothesis_var var))
   | Term.Lam (_, id, Some cst, _te) when is_sttfa_const sttfa_type cst ->
-      let id = gen_fresh env [] id in
+      let id = gen_fresh env id in
       let* jp, proof = compile_proof dkenv (add_ty_var_dk env id) _te in
-      let j = make_judgment env jp.hyp (ForallP (soi id, jp.thm)) in
-      return (j, ForallPI (j, proof, soi id))
+      let j = make_judgment env jp.hyp (ForallP (type_var id, jp.thm)) in
+      return (j, ForallPI (j, proof, type_var id))
   | Term.Lam (_, id, Some (Term.App (cst, _, _) as _ty), _te)
     when is_sttfa_const sttfa_etap cst || is_sttfa_const sttfa_eta cst ->
       let _ty' = Compile_type.compile_wrapped__type dkenv env _ty in
-      let id = gen_fresh env [] id in
+      let id = gen_fresh env id in
       let* jp, proof = compile_proof dkenv (add_te_var_dk env id _ty') _te in
       let j =
-        make_judgment env jp.hyp (Te (Forall (soi id, _ty', extract_te jp.thm)))
+        make_judgment env jp.hyp
+          (Te (Forall (term_var id, _ty', extract_te jp.thm)))
       in
-      return (j, ForallI (j, proof, soi id))
+      return (j, ForallI (j, proof, term_var id))
   | Term.Lam (_, id, Some (Term.App (cst, _, _) as _te), prf)
     when is_sttfa_const sttfa_eps cst ->
       let remove_hyp _ =
@@ -50,7 +51,7 @@ let rec compile_proof dkenv env proof : (_, [> p_error ]) result =
         make_judgment env (remove_hyp _te' jp.hyp)
           (Te (Impl (_te', extract_te jp.thm)))
       in
-      return (j, ImplI (j, proof, string_of_ident id))
+      return (j, ImplI (j, proof, hypothesis_var id))
   | Term.Const (lc, name) ->
       let te = Api.Env.get_type dkenv lc name in
       let* te' = Compile_type.compile_wrapped_term dkenv empty_env te in
