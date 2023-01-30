@@ -6,7 +6,8 @@
 
 (package
  (name sttfaxport)
- (synopsis "An exporter for files written in the STTfa logic.")
+ (synopsis "An exporter for files written in the STTfa logic in the language
+           Dedukti.")
  (depends (ocaml (>= 4.08))
           dune
           (dedukti (>= 2.7))))
