@@ -115,7 +115,7 @@ let rec decompile_proof ctx prf =
   | ForallI (_, proof, var) ->
       let j' = judgment_of proof in
       let _, _ty =
-        List.find (fun (x, _) -> if x = var then true else false) j'.te
+        List.find (fun (x, _) -> x = var) j'.te
       in
       let _ty' = decompile__type ctx _ty in
       let ctx' = add_te_var var _ty' ctx in
