@@ -44,10 +44,14 @@ equal_leibniz [A:TYPE+] : AXIOM (FORALL(x:A):(FORALL(y:A):(connectives_sttfa.equ
 END connectives_sttfa
 connectives_pvs : THEORY
 BEGIN
-IMPORTING connectives_sttfa
-%% sttfa_True := ...,%% sttfa_False := ...,%% sttfa_Not := ...,
-%% sttfa_And := ...,%% sttfa_Or := ...,%% sttfa_ex[A:TYPE+] := ...,
-%% equal[A:TYPE+] := ...
-}}
+IMPORTING connectives_sttfa {{
+  %% sttfa_True := ...,
+  %% sttfa_False := ...,
+  %% sttfa_Not := ...,
+  %% sttfa_And := ...,
+  %% sttfa_Or := ...,
+  %% sttfa_ex[A:TYPE+] := ...,
+  %% equal[A:TYPE+] := ...
+  }}
 END connectives_pvs
 

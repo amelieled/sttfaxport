@@ -294,11 +294,10 @@ let print_alignment : F.formatter -> string -> StrSet.t -> A.item list -> unit =
     F.pp_print_list ~pp_sep pp_it fmt its
   in
   let out spec = F.fprintf fmt spec in
-  out "IMPORTING %s_sttfa" md;
-  if StrSet.is_empty deps then out "@\n" else out " {{@[<v 2>  ";
-  out "%a@," pp_deps deps;
-  out "%a" pp_its (List.filter uninterpreted items);
-  out "@]@,}}@\n"
+  out "IMPORTING %s_sttfa {{@[<v 2>  " md;
+  if not (StrSet.is_empty deps) then out "%a@," pp_deps deps;
+  out "%a@," pp_its (List.filter uninterpreted items);
+  out "@]}}@\n"
 
 let print_ast (oc : out_channel) _ ast : unit =
   let deps = ast.Ast.dep in
