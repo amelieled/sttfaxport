@@ -3,7 +3,7 @@
 Copyright Deducteam <dedukti-dev@inria.fr> 2022
 
 With STTfaXport, you can export theories written in Dedukti in the encoding of
-STTfa to other proof assistants.
+STTfa to other proof assistants (for now Coq, HOL Light, Lean, Matita, OpenTheory - so Isabelle/HOL and HOL4 - and PVS).
 
 To build STTfaXport, you need
 
